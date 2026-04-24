@@ -357,7 +357,7 @@ export default class ArenaScene extends Phaser.Scene{
       f.gfx=this.add.graphics().setDepth(10);f.glowGfx=this.add.graphics().setDepth(9);
       f.trailGfx=this.add.graphics().setDepth(8);
       f.armorGfx=this.add.graphics().setDepth(18);
-      f.nameGfx=this.add.text(0,0,pd.name,{fontFamily:'Outfit',fontSize:'14px',color:'#ffffff88',stroke:'#000',strokeThickness:2,fontStyle:'700'}).setOrigin(0.5).setDepth(12);
+      f.nameGfx=this.add.text(0,0,pd.name,{fontFamily:'Space Grotesk',fontSize:'18px',color:'#ffffffcc',stroke:'#000',strokeThickness:4,fontStyle:'700'}).setOrigin(0.5).setDepth(12);
       return f;
     };
     const p1=this.pData[0]||{id:'local',name:'Fighter',weapon:{element:'fire'}};
@@ -375,13 +375,13 @@ export default class ArenaScene extends Phaser.Scene{
     this.input.mouse?.disableContextMenu();
 
     this.hudGfx=this.add.graphics().setDepth(50);
-    this.timerText=this.add.text(W/2,30,'99',{fontFamily:'Unbounded',fontSize:'26px',color:'#fff',stroke:'#000',strokeThickness:3}).setOrigin(0.5).setDepth(51);
-    this.p1Nm=this.add.text(135,14,f1.name,{fontFamily:'Outfit',fontSize:'15px',color:'#fff',stroke:'#000',strokeThickness:2,fontStyle:'bold'}).setDepth(51);
-    this.p2Nm=this.add.text(W-135,14,f2.name,{fontFamily:'Outfit',fontSize:'15px',color:'#fff',stroke:'#000',strokeThickness:2,fontStyle:'bold'}).setOrigin(1,0).setDepth(51);
-    this.comboText=this.add.text(W/2,H*0.3,'',{fontFamily:'Unbounded',fontSize:'24px',color:'#fbbf24',stroke:'#000',strokeThickness:4}).setOrigin(0.5).setDepth(51).setAlpha(0);
-    this.roundText=this.add.text(W/2,H*0.22,'',{fontFamily:'Unbounded',fontSize:'20px',color:'#a78bfa',stroke:'#000',strokeThickness:3}).setOrigin(0.5).setDepth(51).setAlpha(0);
-    this.koText=this.add.text(W/2,H*0.4,'',{fontFamily:'Unbounded',fontSize:'60px',color:'#f87171',stroke:'#000',strokeThickness:6}).setOrigin(0.5).setDepth(55).setAlpha(0);
-    this.tauntText=this.add.text(W/2,H*0.72,'',{fontFamily:'Outfit',fontSize:'15px',fontStyle:'italic',color:'#c8d6e5',stroke:'#000',strokeThickness:3,wordWrap:{width:560}}).setOrigin(0.5).setDepth(52).setAlpha(0);
+    this.timerText=this.add.text(W/2,32,'99',{fontFamily:'Unbounded',fontSize:'36px',color:'#FFE66D',stroke:'#000',strokeThickness:5}).setOrigin(0.5).setDepth(51);
+    this.p1Nm=this.add.text(140,12,f1.name,{fontFamily:'Space Grotesk',fontSize:'20px',color:'#fff',stroke:'#000',strokeThickness:4,fontStyle:'bold'}).setDepth(51);
+    this.p2Nm=this.add.text(W-140,12,f2.name,{fontFamily:'Space Grotesk',fontSize:'20px',color:'#fff',stroke:'#000',strokeThickness:4,fontStyle:'bold'}).setOrigin(1,0).setDepth(51);
+    this.comboText=this.add.text(W/2,H*0.28,'',{fontFamily:'Unbounded',fontSize:'36px',color:'#FFE66D',stroke:'#000',strokeThickness:6}).setOrigin(0.5).setDepth(51).setAlpha(0);
+    this.roundText=this.add.text(W/2,H*0.20,'',{fontFamily:'Unbounded',fontSize:'32px',color:'#C9A0FF',stroke:'#000',strokeThickness:5}).setOrigin(0.5).setDepth(51).setAlpha(0);
+    this.koText=this.add.text(W/2,H*0.38,'',{fontFamily:'Unbounded',fontSize:'82px',color:'#FF8A76',stroke:'#000',strokeThickness:8}).setOrigin(0.5).setDepth(55).setAlpha(0);
+    this.tauntText=this.add.text(W/2,H*0.70,'',{fontFamily:'Space Grotesk',fontSize:'20px',fontStyle:'bold',color:'#FFE66D',stroke:'#000',strokeThickness:5,wordWrap:{width:600},padding:{x:12,y:6}}).setOrigin(0.5).setDepth(52).setAlpha(0);
 
     // Particles
     this.slashFx=this.add.particles(0,0,'sp',{speed:{min:120,max:400},scale:{start:1.3,end:0},lifespan:400,tint:[0xfbbf24,0xffffff,0xff8c00],blendMode:'ADD',frequency:-1,quantity:20}).setDepth(20);
@@ -394,7 +394,7 @@ export default class ArenaScene extends Phaser.Scene{
     this.impactGfx=this.add.graphics().setDepth(25);
     this.vignetteGfx=this.add.graphics().setDepth(45);
 
-    this.add.text(W/2,H-14,'A/D Move | W Jump | S Crouch | J Slash | K Heavy | L Kick | I Block | Double-tap A/D Dodge | fwd+fwd+L Special',{fontFamily:'Outfit',fontSize:'11px',color:'#64748b'}).setOrigin(0.5).setDepth(51);
+    this.add.text(W/2,H-16,'A/D Move | W Jump | S Crouch | J Slash | K Heavy | L Kick | I Block | Double-tap A/D Dodge | fwd+fwd+L Special',{fontFamily:'Space Grotesk',fontSize:'13px',color:'#88C8E8',fontStyle:'bold',stroke:'#000',strokeThickness:2}).setOrigin(0.5).setDepth(51);
 
     // ═══════ PIXEL ART SPRITE SETUP (both fighters) ═══════
     if(this.spriteRenderers&&this.spriteRenderers.length>=2){
@@ -410,13 +410,16 @@ export default class ArenaScene extends Phaser.Scene{
 
     // ═══════ CLICK TO START (unlocks AudioContext for Chrome/Safari) ═══════
     const overlay=this.add.graphics().setDepth(100);
-    overlay.fillStyle(0x05050a,0.85);overlay.fillRect(0,0,W,H);
+    overlay.fillStyle(0x05050a,0.9);overlay.fillRect(0,0,W,H);
+    // Neo Brutalist decorative border
+    overlay.lineStyle(4,0xFFE66D,0.3);overlay.strokeRect(30,30,W-60,H-60);
+    overlay.lineStyle(2,0xFF8AC4,0.15);overlay.strokeRect(40,40,W-80,H-80);
     const clickText=this.add.text(W/2,H/2,'CLICK TO FIGHT',{
-      fontFamily:'Unbounded',fontSize:'28px',color:'#00f0ff',
-      stroke:'#000',strokeThickness:4,
+      fontFamily:'Unbounded',fontSize:'44px',color:'#FFE66D',
+      stroke:'#000',strokeThickness:7,
     }).setOrigin(0.5).setDepth(101);
-    const subText=this.add.text(W/2,H/2+44,'Press anywhere to enter the arena',{
-      fontFamily:'Outfit',fontSize:'14px',color:'#374151',
+    const subText=this.add.text(W/2,H/2+52,'Press anywhere to enter the arena',{
+      fontFamily:'Space Grotesk',fontSize:'18px',color:'#88C8E8',fontStyle:'bold',stroke:'#000',strokeThickness:3,
     }).setOrigin(0.5).setDepth(101);
     this.tweens.add({targets:clickText,alpha:{from:0.4,to:1},duration:900,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     this.input.once('pointerdown',()=>{
@@ -468,21 +471,27 @@ export default class ArenaScene extends Phaser.Scene{
         ?TAUNTS_NAMED(opp.name):TAUNTS_GENERIC;
       this.showTaunt(pool,200,opp);
     }
-    const ft=this.add.text(W/2,H*0.38,'FIGHT',{fontFamily:'Unbounded',fontSize:'52px',color:'#fff',stroke:'#000',strokeThickness:5}).setOrigin(0.5).setDepth(60);
+    const ft=this.add.text(W/2,H*0.38,'FIGHT',{fontFamily:'Unbounded',fontSize:'72px',color:'#FF8AC4',stroke:'#000',strokeThickness:8}).setOrigin(0.5).setDepth(60);
     this.tweens.add({targets:ft,alpha:{from:0,to:1},duration:400,yoyo:true,hold:800,onComplete:()=>{ft.destroy();this.transitioning=false;this.matchOn=true;}});
     this.sfx?.roundStart();
   }
 
   drawBg(){
     const bg=this.add.graphics().setDepth(0);
-    for(let y=0;y<FLOOR;y+=2){const t=y/FLOOR;bg.fillStyle(Phaser.Display.Color.GetColor(Math.floor(12+t*50),Math.floor(8+t*28),Math.floor(30+t*55)));bg.fillRect(0,y,W,2)}
-    bg.fillStyle(0xc4a0ff,0.06);bg.fillCircle(W/2,FLOOR-20,200);bg.fillStyle(0xffa8cc,0.04);bg.fillCircle(W/2,FLOOR-10,120);
+    for(let y=0;y<FLOOR;y+=2){const t=y/FLOOR;bg.fillStyle(Phaser.Display.Color.GetColor(Math.floor(14+t*45),Math.floor(10+t*25),Math.floor(32+t*50)));bg.fillRect(0,y,W,2)}
+    // Subtle grid pattern — Neo Brutalist
+    bg.lineStyle(1,0xffffff,0.015);
+    for(let x=0;x<W;x+=60){bg.lineBetween(x,0,x,FLOOR)}
+    for(let y=0;y<FLOOR;y+=60){bg.lineBetween(0,y,W,y)}
+    bg.fillStyle(0xC9A0FF,0.04);bg.fillCircle(W/2,FLOOR-20,180);bg.fillStyle(0xFF8AC4,0.03);bg.fillCircle(W/2,FLOOR-10,100);
     const m=(c,pts)=>{bg.fillStyle(c);bg.beginPath();bg.moveTo(0,FLOOR);for(const[x,y]of pts)bg.lineTo(x,FLOOR-y);bg.lineTo(W,FLOOR);bg.closePath();bg.fillPath()};
     m(0x161228,[[100,60],[200,110],[350,40],[500,85],[650,130],[800,50],[950,100],[1100,65],[1200,35]]);
     m(0x10091e,[[0,25],[150,65],[300,90],[450,35],[600,55],[750,80],[900,45],[1050,70],[1200,25]]);
     m(0x0a0516,[[50,15],[200,35],[400,25],[550,40],[700,30],[900,22],[1100,32],[1200,10]]);
     bg.fillStyle(0x080412);bg.fillRect(0,FLOOR,W,H-FLOOR);
-    bg.lineStyle(2,0x8060a0,0.08);bg.lineBetween(0,FLOOR,W,FLOOR);
+    // Thick floor line — Neo Brutalist
+    bg.lineStyle(4,0xFFE66D,0.15);bg.lineBetween(0,FLOOR,W,FLOOR);
+    bg.lineStyle(2,0xFFE66D,0.06);bg.lineBetween(0,FLOOR+2,W,FLOOR+2);
   }
 
   onKeyDown(key){
@@ -1007,67 +1016,83 @@ export default class ArenaScene extends Phaser.Scene{
 
   drawHUD(){
     const g=this.hudGfx;g.clear();const[f1,f2]=this.f;if(!f1||!f2)return;
-    const bW=280,bH=16,bY=32,gap=24,r=8;
+    const bW=320,bH=22,bY=34,gap=28,r=4;
 
-    // ═══════ PLAYER 1 HUD ═══════
-    const p1x=gap+90;
-    // HP bar
-    g.fillStyle(0x1a1a2e,0.9);g.fillRoundedRect(p1x,bY,bW,bH,r);
-    const p1p=Math.max(0,f1.hp/f1.maxHp);if(p1p>0){g.fillStyle(p1p>0.5?0x34d399:p1p>0.25?0xfbbf24:0xf87171,0.9);g.fillRoundedRect(p1x,bY,bW*p1p,bH,r)}
-    g.lineStyle(1.5,0xffffff,0.15);g.strokeRoundedRect(p1x,bY,bW,bH,r);
+    // ═══════ NEO BRUTALIST PLAYER 1 HUD ═══════
+    const p1x=gap+95;
+    // HP bar — thick black border, hard fill
+    g.fillStyle(0x000000,1);g.fillRect(p1x-2,bY-2,bW+4,bH+4);
+    g.fillStyle(0x1a1a2e,1);g.fillRect(p1x,bY,bW,bH);
+    const p1p=Math.max(0,f1.hp/f1.maxHp);
+    if(p1p>0){g.fillStyle(p1p>0.5?0x88D8A8:p1p>0.25?0xFFE66D:0xFF8A76,1);g.fillRect(p1x,bY,Math.floor(bW*p1p),bH)}
+    g.lineStyle(3,0x000000,1);g.strokeRect(p1x,bY,bW,bH);
     // Stamina bar
-    const stY=bY+bH+4;
-    g.fillStyle(0x1a1a2e,0.7);g.fillRoundedRect(p1x,stY,bW,6,3);
-    const st1=Math.max(0,f1.stamina/f1.maxStamina);if(st1>0){g.fillStyle(st1>0.3?0x38bdf8:0xf87171,0.8);g.fillRoundedRect(p1x,stY,bW*st1,6,3)}
-    // Durability bar (only if not dummy)
+    const stY=bY+bH+6;
+    g.fillStyle(0x000000,1);g.fillRect(p1x-1,stY-1,bW+2,10);
+    g.fillStyle(0x1a1a2e,1);g.fillRect(p1x,stY,bW,8);
+    const st1=Math.max(0,f1.stamina/f1.maxStamina);
+    if(st1>0){g.fillStyle(st1>0.3?0x88C8E8:0xFF8A76,1);g.fillRect(p1x,stY,Math.floor(bW*st1),8)}
+    g.lineStyle(2,0x000000,1);g.strokeRect(p1x,stY,bW,8);
+    // Durability bar
     if(!f1.isDummy){
-      const duY=stY+8;
-      g.fillStyle(0x1a1a2e,0.5);g.fillRoundedRect(p1x,duY,bW*0.5,4,2);
+      const duY=stY+12;
+      g.fillStyle(0x000000,1);g.fillRect(p1x-1,duY-1,Math.floor(bW*0.5)+2,7);
+      g.fillStyle(0x1a1a2e,0.8);g.fillRect(p1x,duY,Math.floor(bW*0.5),5);
       const du1=clamp(f1.weaponDur/f1.maxDur,0,1);
-      if(du1>0&&!f1.bareHanded){g.fillStyle(du1>0.5?0xfbbf24:du1>0.25?0xf97316:0xef4444,0.8);g.fillRoundedRect(p1x,duY,bW*0.5*du1,4,2)}
-      if(f1.bareHanded){
-        // Show "BARE" text indicator handled via Phaser text if needed
-      }
+      if(du1>0&&!f1.bareHanded){g.fillStyle(du1>0.5?0xFFE66D:du1>0.25?0xFF8A76:0xf87171,1);g.fillRect(p1x,duY,Math.floor(bW*0.5*du1),5)}
+      g.lineStyle(2,0x000000,1);g.strokeRect(p1x,duY,Math.floor(bW*0.5),5);
     }
-    // Portrait
-    g.fillStyle(0x0f0f25,0.9);g.fillCircle(p1x-30,bY+bH/2,26);g.lineStyle(2.5,parseInt(f1.colorHex.slice(1),16),0.7);g.strokeCircle(p1x-30,bY+bH/2,26);
+    // Portrait — Neo Brutalist square
+    g.fillStyle(0x000000,1);g.fillRect(p1x-62,bY-4,52,52);
+    g.fillStyle(0x0f0f25,1);g.fillRect(p1x-60,bY-2,48,48);
+    g.lineStyle(3,parseInt(f1.colorHex.slice(1),16),1);g.strokeRect(p1x-60,bY-2,48,48);
     // Special CD
-    if(f1.specialMax>0){const cd=Math.max(0,1-f1.specialCd/f1.specialMax);g.fillStyle(0x1a1a2e,0.6);g.fillRoundedRect(p1x,stY+14,bW*0.35,4,2);g.fillStyle(0xa78bfa,0.8);g.fillRoundedRect(p1x,stY+14,bW*0.35*cd,4,2)}
+    if(f1.specialMax>0){const cd=Math.max(0,1-f1.specialCd/f1.specialMax);const spY=stY+22;g.fillStyle(0x000000,1);g.fillRect(p1x-1,spY-1,Math.floor(bW*0.35)+2,7);g.fillStyle(0x1a1a2e,0.8);g.fillRect(p1x,spY,Math.floor(bW*0.35),5);g.fillStyle(0xC9A0FF,1);g.fillRect(p1x,spY,Math.floor(bW*0.35*cd),5);g.lineStyle(2,0x000000,1);g.strokeRect(p1x,spY,Math.floor(bW*0.35),5)}
     // Bleed indicator
-    if(f1.bleedTimer>0){g.fillStyle(0xf87171,0.5+Math.sin(Date.now()*0.01)*0.3);g.fillCircle(p1x+bW+12,bY+bH/2,5)}
-    // Round win dots
+    if(f1.bleedTimer>0){g.fillStyle(0xFF8A76,0.7+Math.sin(Date.now()*0.01)*0.3);g.fillRect(p1x+bW+8,bY+4,12,12);g.lineStyle(2,0x000000,1);g.strokeRect(p1x+bW+8,bY+4,12,12)}
+    // Round win squares
     for(let i=0;i<ROUNDS_WIN;i++){
-      const dx=p1x-30-18+i*14,dy=bY+bH+18;
-      if(i<f1.roundWins){g.fillStyle(0x34d399,0.9);g.fillCircle(dx,dy,5)}
-      else{g.lineStyle(1.5,0x475569,0.5);g.strokeCircle(dx,dy,5)}
+      const dx=p1x-56+i*18,dy=bY+54;
+      if(i<f1.roundWins){g.fillStyle(0x88D8A8,1);g.fillRect(dx,dy,12,12);g.lineStyle(2,0x000000,1);g.strokeRect(dx,dy,12,12)}
+      else{g.lineStyle(2,0x475569,0.7);g.strokeRect(dx,dy,12,12)}
     }
 
-    // ═══════ PLAYER 2 HUD ═══════
-    const p2x=W-gap-90-bW;
-    g.fillStyle(0x1a1a2e,0.9);g.fillRoundedRect(p2x,bY,bW,bH,r);
-    const p2p=Math.max(0,f2.hp/f2.maxHp);if(p2p>0){g.fillStyle(p2p>0.5?0x34d399:p2p>0.25?0xfbbf24:0xf87171,0.9);g.fillRoundedRect(p2x+bW*(1-p2p),bY,bW*p2p,bH,r)}
-    g.lineStyle(1.5,0xffffff,0.15);g.strokeRoundedRect(p2x,bY,bW,bH,r);
+    // ═══════ NEO BRUTALIST PLAYER 2 HUD ═══════
+    const p2x=W-gap-95-bW;
+    g.fillStyle(0x000000,1);g.fillRect(p2x-2,bY-2,bW+4,bH+4);
+    g.fillStyle(0x1a1a2e,1);g.fillRect(p2x,bY,bW,bH);
+    const p2p=Math.max(0,f2.hp/f2.maxHp);
+    if(p2p>0){const fillW=Math.floor(bW*p2p);g.fillStyle(p2p>0.5?0x88D8A8:p2p>0.25?0xFFE66D:0xFF8A76,1);g.fillRect(p2x+bW-fillW,bY,fillW,bH)}
+    g.lineStyle(3,0x000000,1);g.strokeRect(p2x,bY,bW,bH);
     // P2 Stamina
-    g.fillStyle(0x1a1a2e,0.7);g.fillRoundedRect(p2x,stY,bW,6,3);
-    const st2=Math.max(0,f2.stamina/f2.maxStamina);if(st2>0){g.fillStyle(st2>0.3?0x38bdf8:0xf87171,0.8);g.fillRoundedRect(p2x+bW*(1-st2),stY,bW*st2,6,3)}
-    // P2 Portrait
-    g.fillStyle(0x0f0f25,0.9);g.fillCircle(p2x+bW+30,bY+bH/2,26);g.lineStyle(2.5,parseInt(f2.colorHex.slice(1),16),0.7);g.strokeCircle(p2x+bW+30,bY+bH/2,26);
-    if(f2.bleedTimer>0){g.fillStyle(0xf87171,0.5+Math.sin(Date.now()*0.01)*0.3);g.fillCircle(p2x-12,bY+bH/2,5)}
-    // P2 Round win dots
+    g.fillStyle(0x000000,1);g.fillRect(p2x-1,stY-1,bW+2,10);
+    g.fillStyle(0x1a1a2e,1);g.fillRect(p2x,stY,bW,8);
+    const st2=Math.max(0,f2.stamina/f2.maxStamina);
+    if(st2>0){const fillW2=Math.floor(bW*st2);g.fillStyle(st2>0.3?0x88C8E8:0xFF8A76,1);g.fillRect(p2x+bW-fillW2,stY,fillW2,8)}
+    g.lineStyle(2,0x000000,1);g.strokeRect(p2x,stY,bW,8);
+    // P2 Portrait — Neo Brutalist square
+    g.fillStyle(0x000000,1);g.fillRect(p2x+bW+10,bY-4,52,52);
+    g.fillStyle(0x0f0f25,1);g.fillRect(p2x+bW+12,bY-2,48,48);
+    g.lineStyle(3,parseInt(f2.colorHex.slice(1),16),1);g.strokeRect(p2x+bW+12,bY-2,48,48);
+    if(f2.bleedTimer>0){g.fillStyle(0xFF8A76,0.7+Math.sin(Date.now()*0.01)*0.3);g.fillRect(p2x-20,bY+4,12,12);g.lineStyle(2,0x000000,1);g.strokeRect(p2x-20,bY+4,12,12)}
+    // P2 Round win squares
     for(let i=0;i<ROUNDS_WIN;i++){
-      const dx=p2x+bW+30+18-i*14,dy=bY+bH+18;
-      if(i<f2.roundWins){g.fillStyle(0x34d399,0.9);g.fillCircle(dx,dy,5)}
-      else{g.lineStyle(1.5,0x475569,0.5);g.strokeCircle(dx,dy,5)}
+      const dx=p2x+bW+16+36-i*18,dy=bY+54;
+      if(i<f2.roundWins){g.fillStyle(0x88D8A8,1);g.fillRect(dx,dy,12,12);g.lineStyle(2,0x000000,1);g.strokeRect(dx,dy,12,12)}
+      else{g.lineStyle(2,0x475569,0.7);g.strokeRect(dx,dy,12,12)}
     }
 
-    // Center timer bg
-    g.fillStyle(0x0f0f25,0.75);g.fillRoundedRect(W/2-28,bY-5,56,bH+10,12);
+    // Center timer — Neo Brutalist box
+    g.fillStyle(0x000000,1);g.fillRect(W/2-36,bY-8,72,bH+18);
+    g.fillStyle(0x1a1a2e,1);g.fillRect(W/2-34,bY-6,68,bH+14);
+    g.lineStyle(3,0xFFE66D,1);g.strokeRect(W/2-34,bY-6,68,bH+14);
 
-    // ═══════ KO VIGNETTE ═══════
+    // ═══════ KO VIGNETTE — Neo Brutalist bars ═══════
     if(this.koActive){
       const vg=this.vignetteGfx;vg.clear();
-      vg.fillStyle(0x000000,0.4);
-      vg.fillRect(0,0,W,60);vg.fillRect(0,H-60,W,60);
+      vg.fillStyle(0x000000,0.6);
+      vg.fillRect(0,0,W,70);vg.fillRect(0,H-70,W,70);
+      vg.lineStyle(3,0xFF8A76,0.4);vg.lineBetween(0,70,W,70);vg.lineBetween(0,H-70,W,H-70);
     }else{this.vignetteGfx.clear()}
   }
 
@@ -1079,14 +1104,14 @@ export default class ArenaScene extends Phaser.Scene{
     this.time.delayedCall(delay,()=>{
       if(fighter){
         const headY=fighter.y+(fighter.pose?.head?.y||(-55))*S;
-        const tx=Math.max(80,Math.min(W-80,fighter.x));
+        const tx=Math.max(100,Math.min(W-100,fighter.x));
         const anchorX=fighter.x>W/2?1:0;
-        this.tauntText.setOrigin(anchorX,1).setPosition(tx,headY-28*S);
+        this.tauntText.setOrigin(anchorX,1).setPosition(tx,headY-32*S);
       }else{
-        this.tauntText.setOrigin(0.5,0.5).setPosition(W/2,H*0.72);
+        this.tauntText.setOrigin(0.5,0.5).setPosition(W/2,H*0.70);
       }
       this.tauntText.setText(`"${msg}"`).setAlpha(1);
-      this.tweens.add({targets:this.tauntText,alpha:{from:1,to:0},duration:500,delay:3200,ease:'Power2'});
+      this.tweens.add({targets:this.tauntText,alpha:{from:1,to:0},duration:600,delay:3500,ease:'Power2'});
       // Play matching audio if available
       const audioKey=TAUNT_AUDIO[msg];
       if(audioKey&&this.cache.audio.has(audioKey)){
@@ -1101,8 +1126,8 @@ export default class ArenaScene extends Phaser.Scene{
     this.koActive=true;this.koTimer=KO_SLOWMO_DUR;
     this.gameSpeed=KO_SLOWMO;
     // KO text
-    this.koText.setText('K.O.').setAlpha(1).setScale(0.5);
-    this.tweens.add({targets:this.koText,scale:{from:0.5,to:1.5},alpha:{from:1,to:0.8},duration:KO_SLOWMO_DUR*0.8,ease:'Back.easeOut'});
+    this.koText.setText('K.O.').setAlpha(1).setScale(0.4);
+    this.tweens.add({targets:this.koText,scale:{from:0.4,to:1.8},alpha:{from:1,to:0.85},duration:KO_SLOWMO_DUR*0.8,ease:'Back.easeOut'});
     // Camera zoom
     this.cameras.main.shake(400,0.025);
     this.cameras.main.flash(200,255,100,100,true);

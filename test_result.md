@@ -132,6 +132,9 @@ frontend:
         - working: true
           agent: "testing"
           comment: "Comprehensive UI testing completed. Verified all 3 phases (FORGE, LOBBY, ARENA) with full navigation flow. THE FORGE: Yellow title with text-shadow (rgb(255,230,109) 4px 4px 0px), blue draw panel (rgb(136,200,232)), lavender config panel (rgb(201,160,255)), yellow WEAPON tab active, white ARMOR tab inactive, pink CLEAR button (rgb(255,138,196)), white inputs with 3px black borders, coral FIRE button active (rgb(255,138,118)), blue SAVE button (rgb(136,200,232)), mint ENTER ARENA button (rgb(136,216,168)). THE LOBBY: White BACK TO FORGE button with 3px border, green THE ARENA title (rgb(136,216,168) 4px 4px 0px shadow), blue HOST/JOIN cards (rgb(136,200,232)), lavender TRAINING card (rgb(201,160,255)), all cards with 3px borders and 5px 5px 0px shadows, yellow HOST GAME button (rgb(255,230,109)), pink START TRAINING button (rgb(255,138,196)). THE ARENA: White EXIT button with 2px border, pink TRAINING MODE text (rgb(255,138,196)), Phaser canvas rendered correctly. All interactive elements working. No console errors. Neo Brutalist UI redesign fully functional and visually correct."
+        - working: true
+          agent: "testing"
+          comment: "Neo Brutalist in-game HUD verification completed. Successfully navigated FORGE → LOBBY → ARENA flow. Drew weapon 'TestBlade', saved it, entered training mode, and started fight. REACT UI ELEMENTS VERIFIED: EXIT button has white background with 2px black border and offset shadow (2px 2px 0px), TRAINING MODE text is pink (#FF8AC4 / rgb(255,138,196)), dark background with Neo Brutalist aesthetic. IN-GAME PHASER HUD ELEMENTS VERIFIED (from screenshot): Health bars are large with thick black borders (no rounded corners, straight edges), Timer '60' is large and yellow in center (36px+ as required), Player names 'Fighter' and 'DUMMY' are large at top (20px font), Taunt text 'You should have stayed logged out.' is bold yellow with thick black stroke, Controls hint is visible at bottom in blue/cyan color (#88C8E8), Square portrait boxes on left (blue) and right (pink) - not circles, Square round-win indicator boxes below portraits. All Neo Brutalist HUD requirements met. No console errors detected. Screenshot captured at .screenshots/arena_hud.png."
 
   - task: "P1 Pixel Art Sprite System (P1SpriteRenderer.js)"
     implemented: true
@@ -207,8 +210,8 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "3.1"
-  test_sequence: 3
+  version: "3.2"
+  test_sequence: 4
   run_ui: false
 
 test_plan:
@@ -222,6 +225,6 @@ agent_communication:
     - agent: "main"
       message: "Replaced P1 stick-figure graphics with pixel art spritesheet. Created P1SpriteRenderer.js module with 22 spritesheets, state-machine animation mapping, and integrated into ArenaScene.js with preload/create/draw pipeline. Visual testing confirmed: idle, walk, jump, attack, kick, block animations all working. Weapon overlay and glow effects preserved. P2 dummy unchanged."
     - agent: "main"
-      message: "Applied Neo Brutalist UI redesign to entire app. Rewrote App.css and index.css with: thick 3px black borders, hard offset box-shadows (5px 5px 0px #000), bright solid colors (coral, lavender, mint, blue, pink, yellow), no gradients/blur/glass-morphism, bold typography with Space Grotesk font, chunky interactive buttons. All 3 screens (Forge, Lobby, Arena) updated. No JSX/logic changes - purely CSS."
+      message: "Applied Neo Brutalist UI redesign to entire app (CSS). Then applied Neo Brutalist to Phaser in-game HUD: upscaled bars 320px wide with 3px black borders, square portraits, yellow timer box, all text upscaled 40-60% (timer 36px, names 20px, combo 36px, round 32px, KO 82px, taunt 20px bold, controls 13px, CLICK 44px, FIGHT 72px), grid background, bold floor line, square round-win indicators."
     - agent: "testing"
-      message: "Comprehensive UI testing completed for Neo Brutalist redesign. Tested all 3 phases (FORGE, LOBBY, ARENA) with full navigation flow. All visual elements verified: yellow title with text-shadow (not gradient), blue draw panel, lavender config panel, correct button colors (pink CLEAR, coral FIRE, blue SAVE, mint ENTER ARENA, yellow HOST GAME, pink START TRAINING), white inputs with 3px black borders, thick borders and offset shadows on all panels. Interactive elements working correctly. No console errors. Screenshots captured for all phases. Neo Brutalist UI redesign is fully functional and visually correct."
+      message: "Completed Neo Brutalist in-game HUD verification. All HUD elements verified and working correctly: health bars with thick black borders (no rounded corners), large yellow timer (36px+), large player names (20px), bold yellow taunt text with black stroke, blue/cyan controls hint, square portrait boxes (not circles), square round-win indicators. React UI elements (EXIT button, TRAINING MODE text) also verified. No console errors. Screenshot saved. All requirements met."
