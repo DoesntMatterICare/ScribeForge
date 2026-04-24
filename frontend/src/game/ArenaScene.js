@@ -49,14 +49,13 @@ function foot(g,x,y,sz,dir){g.fillRoundedRect(x-sz*0.3,y-sz*0.35,sz*1.3*dir,sz*0
 function head(g,hx,hy,radius,dir,c,isHit){
   g.fillCircle(hx,hy,radius);
   g.fillRoundedRect(hx-radius*0.6,hy+radius*0.3,radius*1.2,radius*0.5,3);
-  g.fillStyle(0x10102a);g.fillCircle(hx,hy-radius*0.1,radius*0.75);
+  g.fillStyle(0x020208);g.fillCircle(hx,hy-radius*0.1,radius*0.75);
   if(!isHit){
-    g.fillStyle(0xffffff,0.75);
-    g.fillCircle(hx+dir*radius*0.25,hy-radius*0.15,2.5);
-    g.fillCircle(hx+dir*radius*0.55,hy-radius*0.15,2.5);
-    g.fillStyle(c||0x60a5fa,0.9);
-    g.fillCircle(hx+dir*radius*0.3,hy-radius*0.15,1.5);
-    g.fillCircle(hx+dir*radius*0.6,hy-radius*0.15,1.5);
+    g.fillStyle(c||0x3399ff,0.9);
+    g.fillCircle(hx+dir*radius*0.25,hy-radius*0.15,3);
+    g.fillCircle(hx+dir*radius*0.55,hy-radius*0.15,3);
+    g.fillStyle(c||0x3399ff,0.4);
+    g.fillCircle(hx+dir*radius*0.4,hy-radius*0.15,5);
   }else{
     g.lineStyle(2,0xf87171,0.8);
     const ex=hx+dir*radius*0.3,ey=hy-radius*0.15;
@@ -361,9 +360,9 @@ export default class ArenaScene extends Phaser.Scene{
       return f;
     };
     const p1=this.pData[0]||{id:'local',name:'Fighter',weapon:{element:'fire'}};
-    const f1=mk(p1,'#60a5fa',true);f1.x=W*0.3;this.f.push(f1);
+    const f1=mk(p1,'#3399ff',true);f1.x=W*0.3;this.f.push(f1);
     const p2=this.pData[1]||{id:'dummy',name:'DUMMY',weapon:{element:'water'}};
-    const f2=mk(p2,'#f472b6',false);f2.x=W*0.7;
+    const f2=mk(p2,'#ff2244',false);f2.x=W*0.7;
     f2.isDummy=(this.mode==='training'||this.mode==='practice'||p2.id==='dummy');
     f2.weaponDur=MAX_DUR*999; // dummy never breaks
     // Give dummy the same armor as P1 if it has none
@@ -405,6 +404,10 @@ export default class ArenaScene extends Phaser.Scene{
         sr.createSprite(fi.x,fi.y);
         fi.useSprite=true;
         fi.spriteRenderer=sr;
+        // ═══════ SHADOW TINT — dark silhouette characters ═══════
+        if(sr.sprite){
+          sr.sprite.setTint(0x080812);
+        }
       }
     }
 
@@ -458,7 +461,11 @@ export default class ArenaScene extends Phaser.Scene{
     // Reset sprites for all fighters
     for(let i=0;i<this.f.length;i++){
       const fi=this.f[i];
-      if(fi.spriteRenderer){fi.spriteRenderer.reset(fi.x,fi.y);}
+      if(fi.spriteRenderer){
+        fi.spriteRenderer.reset(fi.x,fi.y);
+        // Re-apply shadow tint after reset
+        if(fi.spriteRenderer.sprite){fi.spriteRenderer.sprite.setTint(0x080812);}
+      }
     }
     // Show round text
     const rndLabel=`ROUND ${this.currentRound}`;
@@ -895,8 +902,20 @@ export default class ArenaScene extends Phaser.Scene{
       // Update sprite animation & position
       f.spriteRenderer.update(f,dt);
 
-      // Glow (keep for sprite)
-      gg.fillStyle(c,0.07);gg.fillCircle(cx,cy-25*S,60*S);gg.fillStyle(c,0.12);gg.fillCircle(cx,cy-25*S,38*S);
+      // ═══════ SHADOW CHARACTER GLOW — prominent colored aura ═══════
+      const glowPulse=0.85+Math.sin(Date.now()*0.003)*0.15;
+      // Outer ambient glow
+      gg.fillStyle(c,0.06*glowPulse);gg.fillCircle(cx,cy-22*S,80*S);
+      // Mid glow
+      gg.fillStyle(c,0.12*glowPulse);gg.fillCircle(cx,cy-22*S,55*S);
+      // Inner bright core
+      gg.fillStyle(c,0.20*glowPulse);gg.fillCircle(cx,cy-22*S,35*S);
+      // Tight hot center
+      gg.fillStyle(c,0.08);gg.fillCircle(cx,cy-22*S,20*S);
+      // Ground glow reflection
+      gg.fillStyle(c,0.08*glowPulse);gg.fillEllipse(cx,f.y+4,60*S,10*S);
+      // Edge rim light on sprite (drawn behind sprite via glowGfx depth 9)
+      gg.lineStyle(2.5,c,0.35*glowPulse);gg.strokeCircle(cx,cy-22*S,42*S);
 
       // Bleed indicator
       if(f.bleedTimer>0){g.lineStyle(2,0xf87171,0.3+Math.sin(Date.now()*0.008)*0.2);g.strokeCircle(cx,cy-20*S,30*S)}
@@ -951,10 +970,16 @@ export default class ArenaScene extends Phaser.Scene{
     // Trails
     for(const tr of f.trails){tg.fillStyle(c,tr.alpha*0.3);const tw={};for(const k in tr.pose)tw[k]={x:tr.x+tr.pose[k].x*dir*S,y:tr.y+tr.pose[k].y*S};tw.hip={x:tr.x,y:tr.y};taperedLimb(tg,tw.hip.x,tw.hip.y,tw.chest.x,tw.chest.y,22*S,26*S);taperedLimb(tg,tw.rSh.x,tw.rSh.y,tw.rElb.x,tw.rElb.y,11*S,9*S);taperedLimb(tg,tw.rElb.x,tw.rElb.y,tw.rHnd.x,tw.rHnd.y,9*S,7*S);tg.fillCircle(tw.head.x,tw.head.y,16*S)}
 
-    // Glow
-    gg.fillStyle(c,0.07);gg.fillCircle(cx,cy-25*S,60*S);gg.fillStyle(c,0.12);gg.fillCircle(cx,cy-25*S,38*S);
+    // ═══════ SHADOW CHARACTER GLOW for stick-figure ═══════
+    const glowPulse2=0.85+Math.sin(Date.now()*0.003)*0.15;
+    gg.fillStyle(c,0.06*glowPulse2);gg.fillCircle(cx,cy-22*S,80*S);
+    gg.fillStyle(c,0.12*glowPulse2);gg.fillCircle(cx,cy-22*S,55*S);
+    gg.fillStyle(c,0.20*glowPulse2);gg.fillCircle(cx,cy-22*S,35*S);
+    gg.fillStyle(c,0.08);gg.fillCircle(cx,cy-22*S,20*S);
+    gg.fillStyle(c,0.08*glowPulse2);gg.fillEllipse(cx,f.y+4,60*S,10*S);
+    gg.lineStyle(2.5,c,0.35*glowPulse2);gg.strokeCircle(cx,cy-22*S,42*S);
 
-    const bd=f.stunTimer>0?0x3a2a6e:0x141432;const bm=f.stunTimer>0?0x4a3a7e:0x1e1e42;
+    const bd=f.stunTimer>0?0x1a0828:0x060610;const bm=f.stunTimer>0?0x200a30:0x0a0a18;
     g.fillStyle(bd);taperedLimb(g,wj.lHip.x,wj.lHip.y,wj.lKne.x,wj.lKne.y,16*S,13*S);taperedLimb(g,wj.lKne.x,wj.lKne.y,wj.lFt.x,wj.lFt.y,13*S,10*S);g.fillRoundedRect(wj.lFt.x-5*S,wj.lFt.y-4*S,12*S*dir,8*S,3);g.fillCircle(wj.lFt.x,wj.lFt.y,5*S);
     g.fillStyle(bd);taperedLimb(g,wj.lSh.x,wj.lSh.y,wj.lElb.x,wj.lElb.y,12*S,10*S);taperedLimb(g,wj.lElb.x,wj.lElb.y,wj.lHnd.x,wj.lHnd.y,10*S,8*S);g.fillStyle(bm);fist(g,wj.lHnd.x,wj.lHnd.y,7*S);
     g.fillStyle(bd);torso(g,wj.lSh,wj.rSh,wj.lHip,wj.rHip);taperedLimb(g,wj.lSh.x,wj.lSh.y,wj.rSh.x,wj.rSh.y,15*S,15*S);taperedLimb(g,wj.lHip.x,wj.lHip.y,wj.rHip.x,wj.rHip.y,16*S,16*S);

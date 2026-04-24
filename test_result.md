@@ -159,6 +159,9 @@ frontend:
         - working: true
           agent: "main"
           comment: "Added preload() for sprite assets, P1 sprite creation in create(), drawFighter() split into sprite path (P1) and stick-figure path (P2). Weapon overlay, glow, and bleed effects maintained for sprite fighter. Round reset resets sprite."
+        - working: true
+          agent: "testing"
+          comment: "Shadow character redesign verified successfully. Tested complete flow: FORGE (drew weapon 'ShadowBlade') → LOBBY → ARENA → FIGHT. SHADOW CHARACTERS VERIFIED: P1 (Fighter) is DARK/BLACK shadow silhouette with prominent BLUE glow aura (not yellow/golden), P2 (DUMMY) is DARK/BLACK shadow silhouette with prominent RED/PINK glow aura (not yellow/golden). GLOW EFFECTS VERIFIED: Both fighters have visible colored glow circles (blue for P1, red for P2), ground glow reflections visible beneath each fighter (elliptical glow), pulsing glow effect working. HUD VERIFIED: P1 portrait box has BLUE border (square, top-left), P2 portrait box has RED border (square, top-right), health bars with thick black borders, yellow timer (58-60), Neo Brutalist HUD intact. WEAPON OVERLAY VERIFIED: P1's weapon visible as white/light colored overlay on shadow character. No console errors. All requirements met. Screenshots: 07_fight_in_progress.png, 08_fight_continued.png."
 
   - task: "Geometry-to-Physics Engine (weaponGeometry.js)"
     implemented: true
@@ -210,13 +213,13 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "3.2"
-  test_sequence: 4
+  version: "3.3"
+  test_sequence: 5
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Neo Brutalist UI Redesign"
+    - "Shadow Character Redesign"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -228,3 +231,5 @@ agent_communication:
       message: "Applied Neo Brutalist UI redesign to entire app (CSS). Then applied Neo Brutalist to Phaser in-game HUD: upscaled bars 320px wide with 3px black borders, square portraits, yellow timer box, all text upscaled 40-60% (timer 36px, names 20px, combo 36px, round 32px, KO 82px, taunt 20px bold, controls 13px, CLICK 44px, FIGHT 72px), grid background, bold floor line, square round-win indicators."
     - agent: "testing"
       message: "Completed Neo Brutalist in-game HUD verification. All HUD elements verified and working correctly: health bars with thick black borders (no rounded corners), large yellow timer (36px+), large player names (20px), bold yellow taunt text with black stroke, blue/cyan controls hint, square portrait boxes (not circles), square round-win indicators. React UI elements (EXIT button, TRAINING MODE text) also verified. No console errors. Screenshot saved. All requirements met."
+    - agent: "testing"
+      message: "Shadow character redesign testing completed successfully. Verified all visual requirements: Both P1 and P2 are dark/black shadow silhouettes (NOT yellow/golden), P1 has blue glow aura, P2 has red glow aura, colored glow circles visible around fighters, ground glow reflections present, P1 portrait box has blue border, P2 portrait box has red border, weapon overlay visible on P1 (white/light colored), Neo Brutalist HUD intact. Complete flow tested: weapon drawing → save → arena → fight. No console errors. All requirements met."
