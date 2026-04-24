@@ -1,0 +1,127 @@
+{
+  "theme": "dark",
+  "archetype": "7 (Electric & Neon)",
+  "emotional_tone": "High-energy, competitive, retro-futuristic, aggressive but playful",
+  "typography": {
+    "fonts": [
+      {
+        "family": "Unbounded",
+        "type": "heading",
+        "import_url": "https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&display=swap",
+        "usage": "H1, H2, Game Title, Major Call-to-Actions. Never use for long text."
+      },
+      {
+        "family": "VT323",
+        "type": "retro",
+        "import_url": "https://fonts.googleapis.com/css2?family=VT323&display=swap",
+        "usage": "Scores, Player Names, Health Bars, Bracket Nodes. Gives the 8-bit arcade feel."
+      },
+      {
+        "family": "JetBrains Mono",
+        "type": "body",
+        "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap",
+        "usage": "Inputs, small labels, room codes, generic UI text."
+      }
+    ],
+    "scales": {
+      "h1": "font-['Unbounded'] text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter uppercase",
+      "h2": "font-['Unbounded'] text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight uppercase",
+      "h3": "font-['Unbounded'] text-xl sm:text-2xl font-bold tracking-tight",
+      "retro_display": "font-['VT323'] text-3xl sm:text-4xl tracking-widest uppercase",
+      "body": "font-['JetBrains_Mono'] text-base text-[#E0E5FF] tracking-wide",
+      "small_label": "font-['JetBrains_Mono'] text-xs sm:text-sm text-[#8A95C7] tracking-[0.2em] uppercase"
+    }
+  },
+  "colors": {
+    "background": {
+      "void": "#05050A",
+      "surface_base": "#0A0A14",
+      "surface_elevated": "#141423"
+    },
+    "neon": {
+      "cyan": "#00F0FF",
+      "lime": "#39FF14",
+      "fire": "#FF3366",
+      "magic": "#BC13FE",
+      "water": "#007AFF"
+    },
+    "text": {
+      "primary": "#E0E5FF",
+      "secondary": "#8A95C7",
+      "muted": "#4F588A",
+      "inverse": "#05050A"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "glow_cyan": "drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]",
+      "glow_lime": "drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]",
+      "glow_fire": "drop-shadow-[0_0_8px_rgba(255,51,102,0.8)]",
+      "box_glow_cyan": "shadow-[0_0_15px_rgba(0,240,255,0.4)]",
+      "box_glow_fire": "shadow-[0_0_15px_rgba(255,51,102,0.4)]"
+    },
+    "borders": {
+      "thin_neon": "border border-[#00F0FF]/50",
+      "active_neon": "border-2 border-[#00F0FF]"
+    },
+    "textures": {
+      "crt_scanlines": "A pointer-events-none overlay fixed to the screen with a repeating-linear-gradient to simulate CRT monitor lines.",
+      "retro_grid": "A subtle background grid pattern using linear-gradient to ground the UI."
+    }
+  },
+  "layouts": {
+    "global": "Always wrap the main app in a container with bg-[#05050A] text-[#E0E5FF] min-h-screen overflow-x-hidden relative. Add the CRT scanline overlay.",
+    "the_forge": {
+      "strategy": "Control Room Grid (Dense, Action-Oriented)",
+      "container": "max-w-7xl mx-auto p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8",
+      "tools_panel": "lg:col-span-3 flex flex-col gap-6",
+      "canvas_panel": "lg:col-span-6 flex flex-col items-center justify-center bg-[#0A0A14] border border-[#00F0FF]/30 p-8 relative",
+      "actions_panel": "lg:col-span-3 flex flex-col gap-6"
+    },
+    "the_arena": {
+      "strategy": "Immersive Canvas + Floating HUD",
+      "container": "relative w-full h-screen bg-[#000000] flex flex-col",
+      "bracket_overlay": "absolute inset-0 z-40 bg-[#05050A]/90 backdrop-blur-md flex flex-col items-center justify-center p-8",
+      "game_canvas_wrapper": "w-full h-full flex-1 relative z-10"
+    }
+  },
+  "components": {
+    "pixel_canvas": {
+      "html_element": "<canvas>",
+      "styling": "width: 100%; max-width: 512px; aspect-ratio: 1/1; image-rendering: pixelated; border: 2px solid #4F588A; background: #0A0A14; cursor: crosshair;",
+      "interaction": "Draw on a 64x64 internal resolution, scaled up via CSS. Include a grid overlay toggle."
+    },
+    "buttons": {
+      "primary": "bg-[#00F0FF] text-[#05050A] font-['Unbounded'] font-bold uppercase tracking-widest px-8 py-4 rounded-none hover:bg-[#E0E5FF] hover:shadow-[0_0_20px_rgba(0,240,255,0.8)] transition-all duration-200 border-b-4 border-[#007AFF] active:border-b-0 active:translate-y-[4px]",
+      "secondary": "bg-transparent text-[#00F0FF] border border-[#00F0FF]/50 font-['JetBrains_Mono'] px-6 py-3 rounded-none hover:bg-[#00F0FF]/10 hover:border-[#00F0FF] transition-all",
+      "element_toggle": "flex items-center justify-center w-full py-4 text-xl font-['Unbounded'] uppercase border-2 transition-all. If Fire: border-[#FF3366] text-[#FF3366] hover:bg-[#FF3366]/20. If Water: border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF]/20."
+    },
+    "inputs": {
+      "text": "bg-[#0A0A14] border-b-2 border-[#4F588A] text-[#E0E5FF] font-['JetBrains_Mono'] text-xl px-4 py-3 rounded-none focus:outline-none focus:border-[#00F0FF] focus:bg-[#141423] transition-colors placeholder:text-[#4F588A]"
+    },
+    "bracket_node": {
+      "styling": "bg-[#0A0A14] border border-[#4F588A] min-w-[160px] p-3 flex flex-col gap-2 relative z-10",
+      "active_styling": "border-[#00F0FF] shadow-[0_0_10px_rgba(0,240,255,0.3)]",
+      "winner_styling": "border-[#39FF14] shadow-[0_0_10px_rgba(57,255,20,0.3)]"
+    },
+    "bracket_lines": {
+      "styling": "Use absolute positioned SVG <path> elements to draw connections between nodes. Stroke color #4F588A for pending matches, #00F0FF for active path, #39FF14 for winner path."
+    }
+  },
+  "media": {
+    "images": {
+      "notes": "No external images required. The entire aesthetic relies on pure CSS, neon colors, typography, and HTML5 canvas drawings. The stickmen and weapons are drawn dynamically.",
+      "css_background": "background-image: radial-gradient(circle at 50% 50%, #141423 0%, #05050A 100%);"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Inject the Google Fonts (Unbounded, VT323, JetBrains Mono) into the main HTML file.",
+    "Implement the CRT Scanline effect as a global fixed div with pointer-events-none: `background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 6px 100%;`",
+    "For the drawing canvas, ensure the logic uses a 64x64 array. The UI HTML <canvas> MUST have `image-rendering: pixelated;` or `image-rendering: crisp-edges;` so the pixels are sharp squares, not blurry.",
+    "For Shadcn components (if used for Dialogs/Modals), strip away the Vercel styling. Remove rounded corners (use `rounded-none`), apply dark backgrounds (`bg-[#0A0A14]`), and add sharp neon borders.",
+    "Build the Tournament Bracket using a flex/grid layout and use an SVG layer positioned absolutely behind the nodes to draw the connecting bracket lines.",
+    "For Phaser (The Arena), instantiate the game inside a specific `div` container. Ensure the Phaser canvas background is transparent so the CSS background bleeds through, OR make the Phaser background `#05050A`.",
+    "Add glowing effects to stickman attacks in Phaser using `setTint()` and blend modes like `Phaser.BlendModes.ADD`.",
+    "Always include `data-testid` on buttons, inputs, canvas, color pickers, and tournament bracket nodes for testing."
+  ]
+}

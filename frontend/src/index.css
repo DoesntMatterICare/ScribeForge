@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #05050A;
+  color: #E0E5FF;
+  font-family: 'JetBrains Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+@layer base {
+  :root {
+    --background: 240 33% 2%;
+    --foreground: 230 71% 94%;
+    --card: 240 33% 4%;
+    --card-foreground: 230 71% 94%;
+    --popover: 240 33% 4%;
+    --popover-foreground: 230 71% 94%;
+    --primary: 186 100% 50%;
+    --primary-foreground: 240 33% 2%;
+    --secondary: 240 15% 8%;
+    --secondary-foreground: 230 71% 94%;
+    --muted: 240 15% 8%;
+    --muted-foreground: 230 24% 54%;
+    --accent: 240 15% 8%;
+    --accent-foreground: 230 71% 94%;
+    --destructive: 346 100% 60%;
+    --destructive-foreground: 230 71% 94%;
+    --border: 240 15% 15%;
+    --input: 240 15% 15%;
+    --ring: 186 100% 50%;
+    --radius: 0;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+  [data-debug-wrapper="true"] { display: contents !important; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0A0A14; }
+::-webkit-scrollbar-thumb { background: #4F588A; }
+::-webkit-scrollbar-thumb:hover { background: #00F0FF; }
+::selection { background: rgba(0,240,255,0.3); color: #E0E5FF; }
