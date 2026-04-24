@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════ */
+/* NEO BRUTALIST THEME — SCRIBE FORGE             */
+/* ═══════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -9,36 +15,62 @@
 }
 
 body {
-  background: #05050A;
-  color: #E0E5FF;
-  font-family: 'JetBrains Mono', monospace;
+  background: #1a1a2e;
+  color: #f0f0f0;
+  font-family: 'Space Grotesk', 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
+/* Subtle noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
 @layer base {
   :root {
-    --background: 240 33% 2%;
-    --foreground: 230 71% 94%;
-    --card: 240 33% 4%;
-    --card-foreground: 230 71% 94%;
-    --popover: 240 33% 4%;
-    --popover-foreground: 230 71% 94%;
-    --primary: 186 100% 50%;
-    --primary-foreground: 240 33% 2%;
-    --secondary: 240 15% 8%;
-    --secondary-foreground: 230 71% 94%;
-    --muted: 240 15% 8%;
-    --muted-foreground: 230 24% 54%;
-    --accent: 240 15% 8%;
-    --accent-foreground: 230 71% 94%;
-    --destructive: 346 100% 60%;
-    --destructive-foreground: 230 71% 94%;
-    --border: 240 15% 15%;
-    --input: 240 15% 15%;
-    --ring: 186 100% 50%;
-    --radius: 0;
+    --background: 234 30% 14%;
+    --foreground: 0 0% 94%;
+    --card: 234 30% 18%;
+    --card-foreground: 0 0% 94%;
+    --popover: 234 30% 18%;
+    --popover-foreground: 0 0% 94%;
+    --primary: 47 100% 70%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 234 20% 22%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 234 20% 22%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 280 60% 75%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 80% 65%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 47 100% 70%;
+    --radius: 12px;
+
+    /* Neo Brutalist palette */
+    --nb-bg: #1a1a2e;
+    --nb-coral: #FF8A76;
+    --nb-lavender: #C9A0FF;
+    --nb-mint: #88D8A8;
+    --nb-blue: #88C8E8;
+    --nb-pink: #FF8AC4;
+    --nb-yellow: #FFE66D;
+    --nb-white: #FFFFFF;
+    --nb-dark: #000000;
+    --nb-border: 3px solid #000000;
+    --nb-shadow: 5px 5px 0px #000000;
+    --nb-shadow-sm: 3px 3px 0px #000000;
+    --nb-shadow-lg: 7px 7px 0px #000000;
   }
 }
 
@@ -48,8 +80,9 @@ body {
   [data-debug-wrapper="true"] { display: contents !important; }
 }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0A0A14; }
-::-webkit-scrollbar-thumb { background: #4F588A; }
-::-webkit-scrollbar-thumb:hover { background: #00F0FF; }
-::selection { background: rgba(0,240,255,0.3); color: #E0E5FF; }
+/* Neo Brutalist Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1a1a2e; border-left: 2px solid #000; }
+::-webkit-scrollbar-thumb { background: var(--nb-lavender); border: 2px solid #000; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--nb-pink); }
+::selection { background: rgba(255, 138, 196, 0.4); color: #fff; }
