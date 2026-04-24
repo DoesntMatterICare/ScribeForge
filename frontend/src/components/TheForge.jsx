@@ -3,7 +3,7 @@ import { Flame, Droplets, Save, Swords, Trash2, Zap, Shield, HardHat } from 'luc
 import StrokeCanvas from './StrokeCanvas';
 import ArmorCanvas from './ArmorCanvas';
 import SkillsPanel from './SkillsPanel';
-import { saveSkill, getSkills, getWeapon, savePlayerName, getPlayerName, saveArmor, getArmor } from '../lib/storage';
+import { saveSkill, getSkills, getWeapon, savePlayerName, getPlayerName, saveArmor, getArmor, saveArmorImage } from '../lib/storage';
 
 const STAT_COLORS = {
   power: '#f472b6',
@@ -58,6 +58,8 @@ export default function TheForge({ onEnterArena, pendingRoom }) {
       special: a?.special || { name: 'OVERPOWER', type: 'overpower', desc: 'Double damage single hit' },
       statBars: a?.statBars || { power: 0.3, speed: 0.5, reach: 0.4, parry: 0.3, chaos: 0 },
       dominantType: a?.dominantType || 'raw',
+      weaponClass: a?.weaponClass || 'balanced',
+      classLabel: a?.classLabel || 'Balanced Weapon',
       gripPoint: a?.gripPoint || null,
       gripOffset: a?.gripOffset || null,
       gripEnd: a?.gripEnd || 'center',
@@ -89,6 +91,9 @@ export default function TheForge({ onEnterArena, pendingRoom }) {
     setArmorAnalysis(result);
     if (result && result.hasArmor) {
       saveArmor(result);
+      // Save the armor canvas image for holographic overlay in arena
+      const imgUrl = armorCanvasRef.current?.toDataURL?.();
+      if (imgUrl) saveArmorImage(imgUrl);
     }
   }, []);
 
@@ -189,6 +194,13 @@ export default function TheForge({ onEnterArena, pendingRoom }) {
                   </span>
                 )}
               </div>
+
+              {/* Weapon class label */}
+              {analysis?.classLabel && analysis.classLabel !== 'Balanced Weapon' && (
+                <div className="dominant-type-badge" style={{background:'var(--nb-pink)',marginBottom:'0.3rem'}}>
+                  ⚔ {analysis.classLabel.toUpperCase()}
+                </div>
+              )}
 
               {/* Dominant type badge */}
               {dt && dt !== 'raw' && (

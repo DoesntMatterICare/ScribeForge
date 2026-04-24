@@ -510,31 +510,128 @@ export function analyzeStroke(rawPoints, rawLength) {
     dominantType = 'pierce';
   }
 
-  // ── Step 7: Special move ──
-  let special;
-  if (elongation_n > 0.7 && pierce > slash) {
-    special = { name: 'LUNGE', type: 'lunge', desc: 'Dash forward, pierce through block' };
-  } else if (elongation_n > 0.7 && slash >= pierce) {
-    special = { name: 'WHIRLWIND', type: 'whirlwind', desc: 'Spin 360°, hits all in radius' };
-  } else if (circularity_n > 0.7) {
-    special = { name: 'SHOCKWAVE', type: 'shockwave', desc: 'AOE ground slam, stuns 800ms' };
-  } else if (mass > 15) {
-    special = { name: 'CRUSH', type: 'crush', desc: 'Unblockable overhead smash' };
-  } else if (chaos > 0.6) {
-    special = { name: 'RICOCHET', type: 'ricochet', desc: 'Bounces 2–3 times off walls' };
-  } else if (corners_n > 0.7) {
-    special = { name: 'SERRATE', type: 'serrate', desc: 'Rapid 5-hit combo, applies bleed' };
-  } else {
-    special = { name: 'OVERPOWER', type: 'overpower', desc: 'Double damage single hit' };
+  // ══════════════════════════════════════════════════════════════════
+  // SHAPE CLASSIFICATION — hardcoded rules that override base stats
+  // ══════════════════════════════════════════════════════════════════
+  let weaponClass = 'balanced'; // default
+  let classLabel = 'Balanced Weapon';
+
+  // Rule 1: Straight + Long → Heavy Spear / Sword
+  if (elongation_n > 0.5 && thickness_n < 0.35) {
+    weaponClass = 'spear';
+    classLabel = elongation_n > 0.7 ? 'Heavy Spear' : 'Long Sword';
+  }
+  // Rule 2: Short + Thick → Hammer
+  else if (elongation_n < 0.35 && (thickness_n > 0.35 || area_n > 0.3) && circularity_n > 0.25) {
+    weaponClass = 'hammer';
+    classLabel = 'Hammer';
+  }
+  // Rule 3: Curved + Sharp → Fast Blade
+  else if (convexity_n < 0.75 && elongation_n > 0.25 && corners_n > 0.15 && thickness_n < 0.4) {
+    weaponClass = 'fastblade';
+    classLabel = 'Fast Blade';
+  }
+  // Rule 4: Messy Scribble → Unstable Weapon
+  if (convexity_n < 0.45 && corners_n > 0.35) {
+    weaponClass = 'unstable';
+    classLabel = 'Unstable Weapon';
   }
 
-  // ── Step 8: Stat bars ──
+  // Apply hardcoded stat overrides per weapon class
+  let finalSpeed = speed, finalReach = reach;
+  let finalSlash = slash, finalBlunt = blunt, finalPierce = pierce;
+  let finalChaos = chaos, finalParry = parry, finalBlockBreak = blockBreak;
+
+  switch (weaponClass) {
+    case 'spear': {
+      // Heavy spear/sword: high reach, high power, low speed
+      finalReach = clamp(reach * 1.4 + 20, 60, 150);
+      finalSpeed = clamp(speed * 0.65, 200, 400);
+      finalPierce = clamp(pierce * 1.5 + 5, 8, 30);
+      finalSlash = clamp(slash * 1.3, 0, 25);
+      finalBlockBreak = clamp(blockBreak * 1.3, 0, 1);
+      finalParry = clamp(parry * 0.8, 0, 1);
+      break;
+    }
+    case 'hammer': {
+      // Hammer: massive power, high blunt, very slow, short reach
+      finalReach = clamp(reach * 0.6, 20, 60);
+      finalSpeed = clamp(speed * 0.5, 200, 350);
+      finalBlunt = clamp(blunt * 2.0 + 8, 12, 30);
+      finalSlash = clamp(slash * 0.3, 0, 8);
+      finalPierce = clamp(pierce * 0.2, 0, 5);
+      finalBlockBreak = clamp(0.7 + blockBreak * 0.3, 0.7, 1);
+      finalParry = clamp(parry * 0.5, 0, 0.4);
+      break;
+    }
+    case 'fastblade': {
+      // Fast blade: high speed, slash damage, low power
+      finalSpeed = clamp(speed * 1.4 + 80, 450, 700);
+      finalSlash = clamp(slash * 1.6 + 4, 8, 25);
+      finalBlunt = clamp(blunt * 0.3, 0, 8);
+      finalPierce = clamp(pierce * 0.7, 0, 15);
+      finalReach = clamp(reach * 0.85, 20, 100);
+      finalParry = clamp(parry * 1.2, 0, 1);
+      finalChaos = clamp(chaos * 0.5, 0, 0.3);
+      break;
+    }
+    case 'unstable': {
+      // Unstable/scribble: special power, high chaos, less control
+      finalChaos = clamp(0.7 + chaos * 0.3, 0.7, 1);
+      finalParry = clamp(parry * 0.3, 0, 0.2);
+      finalSpeed = clamp(speed * 0.9 + (Math.random() * 100 - 50), 200, 700);
+      finalSlash = clamp(slash + Math.random() * 10, 0, 25);
+      finalBlunt = clamp(blunt + Math.random() * 10, 0, 30);
+      finalPierce = clamp(pierce + Math.random() * 10, 0, 30);
+      finalBlockBreak = clamp(blockBreak * 1.5, 0, 1);
+      break;
+    }
+    default: break; // balanced — keep original stats
+  }
+
+  // Override special move based on weapon class
+  let classSpecial = { name: 'OVERPOWER', type: 'overpower', desc: 'Double damage single hit' };
+  switch (weaponClass) {
+    case 'spear':
+      classSpecial = elongation_n > 0.7
+        ? { name: 'LUNGE', type: 'lunge', desc: 'Dash forward, pierce through block' }
+        : { name: 'WHIRLWIND', type: 'whirlwind', desc: 'Spin 360°, hits all in radius' };
+      break;
+    case 'hammer':
+      classSpecial = mass > 18
+        ? { name: 'CRUSH', type: 'crush', desc: 'Unblockable overhead smash' }
+        : { name: 'SHOCKWAVE', type: 'shockwave', desc: 'AOE ground slam, stuns 800ms' };
+      break;
+    case 'fastblade':
+      classSpecial = { name: 'SERRATE', type: 'serrate', desc: 'Rapid 5-hit combo, applies bleed' };
+      break;
+    case 'unstable':
+      classSpecial = { name: 'RICOCHET', type: 'ricochet', desc: 'Bounces 2–3 times off walls' };
+      break;
+    default: break;
+  }
+
+  // ── Step 7: Special move (use class override if applicable) ──
+  const finalSpecial = classSpecial;
+
+  // Recalculate dominant type from overridden stats
+  if (finalSlash < 5 && finalBlunt < 5 && finalPierce < 5) {
+    dominantType = 'raw';
+  } else if (finalSlash >= finalBlunt && finalSlash >= finalPierce) {
+    dominantType = 'slash';
+  } else if (finalBlunt >= finalSlash && finalBlunt >= finalPierce) {
+    dominantType = 'blunt';
+  } else {
+    dominantType = 'pierce';
+  }
+
+  // ── Step 8: Stat bars (use final overridden values) ──
   const statBars = {
-    power: clamp((blunt + slash + pierce) / 85, 0, 1),
-    speed: clamp(1 - ((speed - 200) / 500), 0, 1),
-    reach: clamp((reach - 20) / 130, 0, 1),
-    parry: clamp(parry, 0, 1),
-    chaos: clamp(chaos, 0, 1),
+    power: clamp((finalBlunt + finalSlash + finalPierce) / 85, 0, 1),
+    speed: clamp(1 - ((finalSpeed - 200) / 500), 0, 1),
+    reach: clamp((finalReach - 20) / 130, 0, 1),
+    parry: clamp(finalParry, 0, 1),
+    chaos: clamp(finalChaos, 0, 1),
   };
 
   // ── Grip offset for hitbox attachment ──
@@ -571,17 +668,21 @@ export function analyzeStroke(rawPoints, rawLength) {
       corners_n, thickness_n, defense_n, energy_n,
     },
 
-    // Physics properties
+    // Physics properties (with class overrides applied)
     physics: {
-      mass, inertia: inertiaRaw, inertia_n, speed, reach,
-      slash, blunt, pierce,
-      chaos, aoeRadius, blockBreak, parry,
+      mass, inertia: inertiaRaw, inertia_n,
+      speed: finalSpeed, reach: finalReach,
+      slash: finalSlash, blunt: finalBlunt, pierce: finalPierce,
+      chaos: finalChaos, aoeRadius, blockBreak: finalBlockBreak,
+      parry: finalParry,
       swingArcEasing,
     },
 
     // Derived
     dominantType,
-    special,
+    special: finalSpecial,
+    weaponClass,
+    classLabel,
     statBars,
 
     // Stroke metadata

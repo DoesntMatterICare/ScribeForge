@@ -259,15 +259,40 @@ frontend:
           agent: "testing"
           comment: "Enhanced glow effects fully functional. VERIFIED VISUAL ELEMENTS: (1) Both fighters are DARK SHADOW silhouettes (tint 0x080812, not yellow/golden) ✓, (2) P1 has BLUE body-wrapping elliptical glow (multiple layers: outer aura 90*S radius, body contour ellipse 40x62, inner core 28x48, tight center 18x32) ✓, (3) P2 has RED body-wrapping elliptical glow ✓, (4) Lightning/energy arcs visible between body joints (2-3 animated arcs with 4-7 segments, line style 1.5px, 0.5 alpha) ✓, (5) Ground light pools beneath fighters (elliptical glows 70x8 and 100x5, with 4 moving caustic dots) ✓, (6) Floating particles around fighters (6 particles with sine wave motion, 1.5-2.3px radius) ✓, (7) Rotating energy rim rings (2 counter-rotating elliptical rings, 36*S and 42*S radius, animated with phase) ✓. Code inspection confirms implementation at lines 905-986. All glow effects pulsing, flickering, and animating correctly. No console errors. Screenshots captured."
 
+  - task: "Weapon Shape Classification System"
+    implemented: true
+    working: true
+    file: "frontend/src/lib/weaponGeometry.js, frontend/src/components/TheForge.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "WEAPON SHAPE CLASSIFICATION FULLY FUNCTIONAL. Tested with long straight diagonal line (top-left to bottom-right). VERIFIED: (1) Weapon class badge displays 'HEAVY SPEAR' in pink badge (⚔ HEAVY SPEAR) ✓, (2) Special move shows 'LUNGE: Dash forward, pierce through block' (correct for heavy spear) ✓, (3) Dominant type badge shows 'PIERCE WEAPON' ✓, (4) REACH stat displays 100 (>= 80 requirement met) ✓, (5) All stat bars visible (Power: 67, Speed: 88, Reach: 100, Parry: 25, Chaos: 0) ✓. Classification logic working correctly: elongation_n > 0.7 triggers 'Heavy Spear' class with LUNGE special move. No console errors. Screenshot: 01_weapon_classification.png."
+
+  - task: "User-Drawn Armor Overlay in Arena"
+    implemented: true
+    working: true
+    file: "frontend/src/game/ArenaScene.js, frontend/src/components/ArmorCanvas.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "USER-DRAWN ARMOR OVERLAY FULLY FUNCTIONAL. Tested complete flow: (1) Drew weapon 'DragonSpear' and saved, (2) Switched to ARMOR tab, drew circular helmet strokes + horizontal body strokes, (3) Armor analysis correctly detected: Helmet (MEDIUM, 24% protection, 99 durability) + Body (HEAVY, 43% protection, 192 durability) = 57% total damage reduction ✓, (4) Entered arena → training mode → started fight → waited 4+ seconds. VISUAL VERIFICATION: Both fighters are DARK SHADOW silhouettes ✓, P1 has BLUE body-wrapping glow with lightning arcs ✓, P2 has RED body-wrapping glow with lightning arcs ✓, USER-DRAWN ARMOR visible as holographic overlay on both fighters (blue-tinted horizontal stripe pattern on P1, red-tinted on P2) ✓, Ground light pools visible (blue/red) ✓, Rotating energy rings visible ✓, Controls hint visible at bottom ✓. Armor overlay renders correctly with color tinting matching fighter colors (armorSprite.setTint at line 1023). No console errors. Screenshots: 07_armor_analysis.png, 10_fight_4sec.png, 11_fight_7sec.png, 12_fight_10sec.png."
+
 metadata:
   created_by: "main_agent"
-  version: "3.4"
-  test_sequence: 6
+  version: "3.5"
+  test_sequence: 7
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Holographic Armor and Enhanced Glow Effects"
+    - "Weapon Shape Classification System"
+    - "User-Drawn Armor Overlay in Arena"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -283,3 +308,5 @@ agent_communication:
       message: "Shadow character redesign testing completed successfully. Verified all visual requirements: Both P1 and P2 are dark/black shadow silhouettes (NOT yellow/golden), P1 has blue glow aura, P2 has red glow aura, colored glow circles visible around fighters, ground glow reflections present, P1 portrait box has blue border, P2 portrait box has red border, weapon overlay visible on P1 (white/light colored), Neo Brutalist HUD intact. Complete flow tested: weapon drawing → save → arena → fight. No console errors. All requirements met."
     - agent: "testing"
       message: "HOLOGRAPHIC ARMOR AND ENHANCED GLOW EFFECTS TESTING COMPLETED. Tested full flow: (1) Drew weapon 'TestBlade' on WEAPON tab, (2) Switched to ARMOR tab and drew armor (8 horizontal body strokes + circular helmet strokes), (3) Verified armor analysis panel shows Helmet (LIGHT 13%) + Body (MEDIUM 25%) = 21% total reduction, (4) Entered arena → started training → clicked to fight → waited 4 seconds. ALL VISUAL ELEMENTS VERIFIED: Dark shadow silhouettes (both fighters), Blue elliptical body-wrapping glow on P1, Red elliptical body-wrapping glow on P2, Holographic armor plates (golden helmet visor arc, shoulder guard circles, hexagonal chest plate), Lightning arcs between body joints, Ground light pools (blue/red), Floating particles, Rotating energy rim rings. No console errors. All requirements met. Screenshots: 01-10 in .screenshots/ folder."
+    - agent: "testing"
+      message: "WEAPON SHAPE CLASSIFICATION & USER-DRAWN ARMOR OVERLAY TESTING COMPLETED. TEST 1 (Weapon Classification): Drew long straight diagonal line, verified HEAVY SPEAR class badge (pink), LUNGE special move, PIERCE WEAPON dominant type, REACH stat 100 (>= 80). All classification requirements met. TEST 2 (Armor Overlay): Drew helmet + body armor, verified armor analysis (Helmet MEDIUM 24%, Body HEAVY 43%, Total 57% reduction), entered arena, started fight, waited 4+ seconds. Verified all visual elements: dark shadow silhouettes, blue glow on P1, red glow on P2, user-drawn armor visible as holographic overlay (blue-tinted on P1, red-tinted on P2), ground light pools, lightning arcs, energy rings. No console errors. All requirements met. Screenshots: 01_weapon_classification.png, 07_armor_analysis.png, 08_arena_lobby.png, 09_arena_before_fight.png, 10_fight_4sec.png, 11_fight_7sec.png, 12_fight_10sec.png."

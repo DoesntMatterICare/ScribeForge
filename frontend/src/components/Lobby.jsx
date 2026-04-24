@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Copy, Users, Play, Swords, ArrowLeft, Bot } from 'lucide-react';
 import { createGameRoom, generateRoomCode } from '../lib/networking';
-import { getWeapon, getPlayerName, getArmor } from '../lib/storage';
+import { getWeapon, getPlayerName, getArmor, getArmorImage } from '../lib/storage';
 
 export default function Lobby({ initialRoom, onGameStart, onBack }) {
   const [roomCode, setRoomCode] = useState(initialRoom || '');
@@ -15,6 +15,7 @@ export default function Lobby({ initialRoom, onGameStart, onBack }) {
   const weapon = getWeapon();
   const playerName = getPlayerName();
   const armor = getArmor();
+  const armorImage = getArmorImage();
 
   const setupNetwork = useCallback((code, hosting) => {
     if (networkRef.current) return;
@@ -79,23 +80,23 @@ export default function Lobby({ initialRoom, onGameStart, onBack }) {
 
   const handleStartGame = useCallback(() => {
     const gameData = {
-      players: players.map(p => ({ id: p.id, name: p.name, weapon: p.weapon, armor: p.armor || armor })),
+      players: players.map(p => ({ id: p.id, name: p.name, weapon: p.weapon, armor: p.armor || armor, armorImage: p.armorImage || armorImage })),
       network: networkRef.current,
       isHost: true,
       mode: 'multiplayer',
     };
     networkRef.current?.send.start(gameData);
     onGameStart(gameData);
-  }, [players, armor, onGameStart]);
+  }, [players, armor, armorImage, onGameStart]);
 
   const handlePractice = useCallback(() => {
     onGameStart({
-      players: [{ id: 'local', name: playerName, weapon, armor }],
+      players: [{ id: 'local', name: playerName, weapon, armor, armorImage }],
       network: null,
       isHost: true,
       mode: 'training',
     });
-  }, [playerName, weapon, armor, onGameStart]);
+  }, [playerName, weapon, armor, armorImage, onGameStart]);
 
   const copyLink = useCallback(() => {
     const url = `${window.location.origin}?room=${roomCode}`;

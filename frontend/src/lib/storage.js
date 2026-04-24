@@ -47,4 +47,6 @@ export function getEquippedIndex() {
 // ═══════ ARMOR ═══════
 export function saveArmor(data) { localStorage.setItem(ARMOR_KEY, JSON.stringify(data)); }
 export function getArmor() { try { return JSON.parse(localStorage.getItem(ARMOR_KEY)); } catch { return null; } }
-export function clearArmor() { localStorage.removeItem(ARMOR_KEY); }
+export function clearArmor() { localStorage.removeItem(ARMOR_KEY); localStorage.removeItem(ARMOR_KEY + '_img'); }
+export function saveArmorImage(dataUrl) { localStorage.setItem(ARMOR_KEY + '_img', dataUrl); }
+export function getArmorImage() { return localStorage.getItem(ARMOR_KEY + '_img') || null; }
