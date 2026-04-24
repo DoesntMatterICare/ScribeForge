@@ -425,7 +425,7 @@ export default class ArenaScene extends Phaser.Scene{
           }
           this.textures.once('addtexture-'+texKey,()=>{
             const armorSprite=this.add.image(fi.x,fi.y-22*S,texKey).setDepth(15);
-            armorSprite.setScale(S*0.28,-S*0.28);
+            armorSprite.setScale(S*0.28,S*0.28);
             armorSprite.setBlendMode(Phaser.BlendModes.ADD);
             armorSprite.setAlpha(0.55);
             fi.armorSprite=armorSprite;
@@ -1018,7 +1018,7 @@ export default class ArenaScene extends Phaser.Scene{
           const armorPulse=0.45+Math.sin(at*3)*0.15;
           const armorFlicker=Math.random()>0.95?0.25:1;
           const armorColor=parseInt(f.colorHex.slice(1),16);
-          f.armorSprite.setPosition(cx,cy-18*S);
+          f.armorSprite.setPosition(cx,cy-32*S);
           f.armorSprite.setAlpha(armorPulse*armorFlicker);
           f.armorSprite.setTint(armorColor);
           f.armorSprite.setFlipX(dir<0);
@@ -1163,7 +1163,7 @@ export default class ArenaScene extends Phaser.Scene{
         const armorPulse2=0.45+Math.sin(at2*3)*0.15;
         const armorFlicker2=Math.random()>0.95?0.25:1;
         const armorColor2=parseInt(f.colorHex.slice(1),16);
-        f.armorSprite.setPosition(cx,cy-18*S);
+        f.armorSprite.setPosition(cx,cy-32*S);
         f.armorSprite.setAlpha(armorPulse2*armorFlicker2);
         f.armorSprite.setTint(armorColor2);
         f.armorSprite.setFlipX(dir<0);
