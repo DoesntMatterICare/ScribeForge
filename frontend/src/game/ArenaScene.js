@@ -902,44 +902,206 @@ export default class ArenaScene extends Phaser.Scene{
       // Update sprite animation & position
       f.spriteRenderer.update(f,dt);
 
-      // ═══════ SHADOW CHARACTER GLOW — prominent colored aura ═══════
-      const glowPulse=0.85+Math.sin(Date.now()*0.003)*0.15;
-      // Outer ambient glow
-      gg.fillStyle(c,0.06*glowPulse);gg.fillCircle(cx,cy-22*S,80*S);
-      // Mid glow
-      gg.fillStyle(c,0.12*glowPulse);gg.fillCircle(cx,cy-22*S,55*S);
-      // Inner bright core
-      gg.fillStyle(c,0.20*glowPulse);gg.fillCircle(cx,cy-22*S,35*S);
-      // Tight hot center
-      gg.fillStyle(c,0.08);gg.fillCircle(cx,cy-22*S,20*S);
-      // Ground glow reflection
-      gg.fillStyle(c,0.08*glowPulse);gg.fillEllipse(cx,f.y+4,60*S,10*S);
-      // Edge rim light on sprite (drawn behind sprite via glowGfx depth 9)
-      gg.lineStyle(2.5,c,0.35*glowPulse);gg.strokeCircle(cx,cy-22*S,42*S);
+      // ═══════ SHADOW CHARACTER GLOW — body-wrapping energy field ═══════
+      const t=Date.now()*0.001;
+      const glowPulse=0.75+Math.sin(t*3)*0.25;
+      const flicker=Math.random()>0.92?0.6:1;
+      const glowA=glowPulse*flicker;
+
+      // Outer ambient aura
+      gg.fillStyle(c,0.04*glowA);gg.fillCircle(cx,cy-22*S,90*S);
+      // Body contour ellipse (vertical)
+      gg.fillStyle(c,0.08*glowA);gg.fillEllipse(cx,cy-18*S,40*S,62*S);
+      // Inner hot core
+      gg.fillStyle(c,0.16*glowA);gg.fillEllipse(cx,cy-18*S,28*S,48*S);
+      // Tight center
+      gg.fillStyle(c,0.06);gg.fillEllipse(cx,cy-18*S,18*S,32*S);
+
+      // ═══ Lightning arcs between body positions ═══
+      const jpts=[
+        {x:cx-12*S*dir,y:cy-40*S},{x:cx+6*S*dir,y:cy-30*S},
+        {x:cx-8*S*dir,y:cy-10*S},{x:cx+10*S*dir,y:cy},
+        {x:cx-6*S*dir,y:cy+15*S},{x:cx+8*S*dir,y:cy+25*S}
+      ];
+      // Draw 2-3 lightning bolts between random joint pairs
+      const arcCount=2+Math.floor(Math.sin(t*5)*1.5);
+      gg.lineStyle(1.5,c,0.5*glowA);
+      for(let a=0;a<arcCount;a++){
+        const i1=Math.floor(Math.abs(Math.sin(t*7+a*2.1))*jpts.length);
+        const i2=Math.min(jpts.length-1,i1+1+Math.floor(Math.abs(Math.cos(t*5+a))*2));
+        const p1=jpts[i1],p2=jpts[i2];
+        const segs=4+Math.floor(Math.random()*3);
+        gg.beginPath();gg.moveTo(p1.x,p1.y);
+        for(let s=1;s<=segs;s++){
+          const frac=s/segs;
+          const mx=p1.x+(p2.x-p1.x)*frac+(Math.random()-0.5)*16*S;
+          const my=p1.y+(p2.y-p1.y)*frac+(Math.random()-0.5)*8*S;
+          gg.lineTo(mx,my);
+        }
+        gg.strokePath();
+      }
+
+      // ═══ Rim energy ring (wraps around body) ═══
+      const ringY=cy-18*S;
+      const ringRx=36*S,ringRy=12*S;
+      const ringPhase=t*2;
+      gg.lineStyle(2,c,0.3*glowA);
+      gg.beginPath();
+      for(let i=0;i<=32;i++){
+        const ang=ringPhase+i*(Math.PI*2/32);
+        const px=cx+Math.cos(ang)*ringRx;
+        const py=ringY+Math.sin(ang)*ringRy;
+        if(i===0)gg.moveTo(px,py);else gg.lineTo(px,py);
+      }
+      gg.strokePath();
+      // Second ring offset
+      gg.lineStyle(1.5,c,0.18*glowA);
+      gg.beginPath();
+      for(let i=0;i<=32;i++){
+        const ang=-ringPhase*0.7+i*(Math.PI*2/32);
+        const px=cx+Math.cos(ang)*(ringRx+6*S);
+        const py=(ringY-10*S)+Math.sin(ang)*(ringRy+4*S);
+        if(i===0)gg.moveTo(px,py);else gg.lineTo(px,py);
+      }
+      gg.strokePath();
+
+      // ═══ Ground interaction — light pool ═══
+      const groundFlicker=0.7+Math.sin(t*4)*0.3;
+      gg.fillStyle(c,0.10*groundFlicker);gg.fillEllipse(cx,f.y+2,70*S,8*S);
+      gg.fillStyle(c,0.06*groundFlicker);gg.fillEllipse(cx,f.y+4,100*S,5*S);
+      // Ground caustics (moving light dots on floor)
+      for(let i=0;i<4;i++){
+        const gx=cx+Math.sin(t*3+i*1.7)*40*S;
+        const gy=f.y+2+Math.cos(t*2+i)*3;
+        gg.fillStyle(c,0.15*groundFlicker);gg.fillCircle(gx,gy,2.5*S);
+      }
+
+      // ═══ Floating energy particles ═══
+      for(let i=0;i<6;i++){
+        const px=cx+Math.sin(t*1.5+i*1.05)*45*S;
+        const py=cy-22*S+Math.cos(t*2+i*0.8)*50*S;
+        const pa=0.15+Math.sin(t*4+i*1.3)*0.15;
+        gg.fillStyle(c,pa*glowA);gg.fillCircle(px,py,1.5+Math.sin(t*3+i)*0.8);
+      }
 
       // Bleed indicator
       if(f.bleedTimer>0){g.lineStyle(2,0xf87171,0.3+Math.sin(Date.now()*0.008)*0.2);g.strokeCircle(cx,cy-20*S,30*S)}
 
-      // ═══════ ARMOR OVERLAY on sprite (armorGfx depth 18 — above sprite) ═══════
+      // ═══════ HOLOGRAPHIC ARMOR OVERLAY on sprite ═══════
       if(f.armor&&!f.armor.broken&&ag){
-        const ar=f.armor;
+        const ar=f.armor;const at=Date.now()*0.001;
+        const armorFlicker=Math.random()>0.95?0.5:1;
+
+        // --- HELMET → Holographic Visor ---
         if(ar.helmet&&ar.helmet.durability>0){
           const hdp=clamp(ar.helmet.durability/ar.helmet.maxDurability,0,1);
           const hColor=ar.helmet.tier==='heavy'?0xfbbf24:ar.helmet.tier==='medium'?0xa78bfa:0x60a5fa;
-          const hx=wj.head.x,hy=wj.head.y,hr=18*S;
-          ag.fillStyle(hColor,0.1*hdp);ag.fillCircle(hx,hy,hr);
-          ag.lineStyle(3.5,hColor,0.75*hdp);
-          ag.beginPath();ag.arc(hx,hy,hr,-Math.PI,0,false);ag.strokePath();
-          ag.lineStyle(1.5,hColor,0.3*hdp);ag.strokeCircle(hx,hy,hr+4);
+          const hx=wj.head.x,hy=wj.head.y,hr=20*S;
+          const visorPulse=0.7+Math.sin(at*4)*0.3;
+
+          // Energy dome over head
+          ag.fillStyle(hColor,0.06*hdp*visorPulse);ag.fillCircle(hx,hy-4*S,hr+6*S);
+          // Visor arc (front-facing shield)
+          ag.lineStyle(3,hColor,0.8*hdp*visorPulse*armorFlicker);
+          ag.beginPath();ag.arc(hx,hy-2*S,hr,-Math.PI*0.85,-Math.PI*0.15,false);ag.strokePath();
+          // Inner visor glow
+          ag.lineStyle(1.5,hColor,0.4*hdp*visorPulse);
+          ag.beginPath();ag.arc(hx,hy-2*S,hr-4*S,-Math.PI*0.8,-Math.PI*0.2,false);ag.strokePath();
+          // Scanning line effect
+          const scanY=hy-hr+(at*40%hr*2);
+          if(scanY>hy-hr&&scanY<hy+hr*0.3){
+            ag.lineStyle(1,hColor,0.5*hdp);
+            ag.lineBetween(hx-hr*0.8,scanY,hx+hr*0.8,scanY);
+          }
+          // Energy field dots around helmet
+          for(let i=0;i<4;i++){
+            const da=-Math.PI*0.85+i*(Math.PI*0.7/3);
+            const dx=hx+Math.cos(da+at*0.5)*(hr+3*S);
+            const dy=(hy-2*S)+Math.sin(da+at*0.5)*(hr+3*S);
+            ag.fillStyle(hColor,0.6*hdp*visorPulse);ag.fillCircle(dx,dy,1.5);
+          }
         }
+
+        // --- BODY ARMOR → Modular Holographic Plates ---
         if(ar.body&&ar.body.durability>0){
           const bdp=clamp(ar.body.durability/ar.body.maxDurability,0,1);
           const bColor=ar.body.tier==='heavy'?0xfbbf24:ar.body.tier==='medium'?0xa78bfa:0x60a5fa;
-          const bx=cx-16*S,by=wj.chest.y-2*S,bw=32*S,bh=cy-wj.chest.y+2*S;
-          ag.fillStyle(bColor,0.12*bdp);ag.fillRoundedRect(bx,by,bw,bh,3);
-          ag.lineStyle(3,bColor,0.7*bdp);ag.strokeRoundedRect(bx,by,bw,bh,3);
-          ag.lineStyle(1.5,bColor,0.3*bdp);
-          ag.lineBetween(cx,by,cx,by+bh);ag.lineBetween(bx,by+bh*0.45,bx+bw,by+bh*0.45);
+          const bodyPulse=0.65+Math.sin(at*3.5)*0.35;
+          const chestX=cx,chestY=wj.chest?wj.chest.y:(cy-30*S);
+          const hipY=cy;
+
+          // ── Shoulder guards ──
+          const lsx=cx-14*S*dir,rsx=cx+14*S*dir,sy2=chestY+2*S;
+          ag.fillStyle(bColor,0.10*bdp*bodyPulse);
+          ag.fillCircle(lsx,sy2,8*S);ag.fillCircle(rsx,sy2,8*S);
+          ag.lineStyle(2,bColor,0.6*bdp*bodyPulse*armorFlicker);
+          ag.strokeCircle(lsx,sy2,8*S);ag.strokeCircle(rsx,sy2,8*S);
+          // Shoulder plate inner detail
+          ag.lineStyle(1,bColor,0.3*bdp);
+          ag.lineBetween(lsx-4*S,sy2,lsx+4*S,sy2);
+          ag.lineBetween(rsx-4*S,sy2,rsx+4*S,sy2);
+
+          // ── Chest plate (hexagonal shape) ──
+          const cpW=22*S,cpH=20*S,cpY=chestY+6*S;
+          ag.fillStyle(bColor,0.07*bdp*bodyPulse);
+          ag.beginPath();
+          ag.moveTo(chestX,cpY-cpH*0.5);
+          ag.lineTo(chestX+cpW*0.5,cpY-cpH*0.25);
+          ag.lineTo(chestX+cpW*0.5,cpY+cpH*0.25);
+          ag.lineTo(chestX,cpY+cpH*0.5);
+          ag.lineTo(chestX-cpW*0.5,cpY+cpH*0.25);
+          ag.lineTo(chestX-cpW*0.5,cpY-cpH*0.25);
+          ag.closePath();ag.fillPath();
+          // Chest plate edge
+          ag.lineStyle(2.5,bColor,0.7*bdp*bodyPulse*armorFlicker);
+          ag.beginPath();
+          ag.moveTo(chestX,cpY-cpH*0.5);
+          ag.lineTo(chestX+cpW*0.5,cpY-cpH*0.25);
+          ag.lineTo(chestX+cpW*0.5,cpY+cpH*0.25);
+          ag.lineTo(chestX,cpY+cpH*0.5);
+          ag.lineTo(chestX-cpW*0.5,cpY+cpH*0.25);
+          ag.lineTo(chestX-cpW*0.5,cpY-cpH*0.25);
+          ag.closePath();ag.strokePath();
+          // Inner hex detail lines
+          ag.lineStyle(1,bColor,0.25*bdp);
+          ag.lineBetween(chestX,cpY-cpH*0.5,chestX,cpY+cpH*0.5);
+          ag.lineBetween(chestX-cpW*0.45,cpY,chestX+cpW*0.45,cpY);
+
+          // ── Core energy node (center) ──
+          const coreR=4*S;
+          const corePulse=0.5+Math.sin(at*6)*0.5;
+          ag.fillStyle(bColor,0.25*bdp*corePulse);ag.fillCircle(chestX,cpY,coreR);
+          ag.lineStyle(1.5,bColor,0.6*bdp*corePulse);ag.strokeCircle(chestX,cpY,coreR);
+
+          // ── Hip / waist guard plates ──
+          const hipW=18*S,hipH2=6*S;
+          ag.fillStyle(bColor,0.06*bdp*bodyPulse);
+          ag.fillRect(chestX-hipW*0.5,hipY-hipH2,hipW,hipH2*2);
+          ag.lineStyle(2,bColor,0.5*bdp*bodyPulse*armorFlicker);
+          ag.strokeRect(chestX-hipW*0.5,hipY-hipH2,hipW,hipH2*2);
+
+          // ── Shield barrier contour (wraps around whole body) ──
+          const shieldPulse=0.4+Math.sin(at*2)*0.15;
+          ag.lineStyle(1.5,bColor,0.2*bdp*shieldPulse);
+          ag.beginPath();
+          for(let i=0;i<=24;i++){
+            const ang=i*(Math.PI*2/24);
+            const rx=30*S+Math.sin(at*3+i*0.5)*3*S;
+            const ry=50*S+Math.cos(at*2+i*0.3)*4*S;
+            const px2=chestX+Math.cos(ang)*rx;
+            const py2=((chestY+hipY)/2)+Math.sin(ang)*ry;
+            if(i===0)ag.moveTo(px2,py2);else ag.lineTo(px2,py2);
+          }
+          ag.closePath();ag.strokePath();
+
+          // ── Energy circuit lines connecting plates ──
+          ag.lineStyle(1,bColor,0.3*bdp*bodyPulse);
+          // Shoulders to chest
+          ag.lineBetween(lsx,sy2+6*S,chestX-cpW*0.3,cpY-cpH*0.3);
+          ag.lineBetween(rsx,sy2+6*S,chestX+cpW*0.3,cpY-cpH*0.3);
+          // Chest to hips
+          ag.lineBetween(chestX-cpW*0.2,cpY+cpH*0.4,chestX-hipW*0.3,hipY-hipH2);
+          ag.lineBetween(chestX+cpW*0.2,cpY+cpH*0.4,chestX+hipW*0.3,hipY-hipH2);
         }
       }
 
@@ -970,14 +1132,59 @@ export default class ArenaScene extends Phaser.Scene{
     // Trails
     for(const tr of f.trails){tg.fillStyle(c,tr.alpha*0.3);const tw={};for(const k in tr.pose)tw[k]={x:tr.x+tr.pose[k].x*dir*S,y:tr.y+tr.pose[k].y*S};tw.hip={x:tr.x,y:tr.y};taperedLimb(tg,tw.hip.x,tw.hip.y,tw.chest.x,tw.chest.y,22*S,26*S);taperedLimb(tg,tw.rSh.x,tw.rSh.y,tw.rElb.x,tw.rElb.y,11*S,9*S);taperedLimb(tg,tw.rElb.x,tw.rElb.y,tw.rHnd.x,tw.rHnd.y,9*S,7*S);tg.fillCircle(tw.head.x,tw.head.y,16*S)}
 
-    // ═══════ SHADOW CHARACTER GLOW for stick-figure ═══════
-    const glowPulse2=0.85+Math.sin(Date.now()*0.003)*0.15;
-    gg.fillStyle(c,0.06*glowPulse2);gg.fillCircle(cx,cy-22*S,80*S);
-    gg.fillStyle(c,0.12*glowPulse2);gg.fillCircle(cx,cy-22*S,55*S);
-    gg.fillStyle(c,0.20*glowPulse2);gg.fillCircle(cx,cy-22*S,35*S);
-    gg.fillStyle(c,0.08);gg.fillCircle(cx,cy-22*S,20*S);
-    gg.fillStyle(c,0.08*glowPulse2);gg.fillEllipse(cx,f.y+4,60*S,10*S);
-    gg.lineStyle(2.5,c,0.35*glowPulse2);gg.strokeCircle(cx,cy-22*S,42*S);
+    // ═══════ SHADOW CHARACTER GLOW — body-wrapping energy for stick-figure ═══════
+    const t2=Date.now()*0.001;
+    const glowPulse2=0.75+Math.sin(t2*3)*0.25;
+    const flicker2=Math.random()>0.92?0.6:1;
+    const glowA2=glowPulse2*flicker2;
+
+    // Body contour ellipse
+    gg.fillStyle(c,0.04*glowA2);gg.fillCircle(cx,cy-22*S,90*S);
+    gg.fillStyle(c,0.08*glowA2);gg.fillEllipse(cx,cy-18*S,40*S,62*S);
+    gg.fillStyle(c,0.16*glowA2);gg.fillEllipse(cx,cy-18*S,28*S,48*S);
+    gg.fillStyle(c,0.06);gg.fillEllipse(cx,cy-18*S,18*S,32*S);
+
+    // Lightning arcs along limbs
+    gg.lineStyle(1.5,c,0.5*glowA2);
+    const limbs=[[wj.rSh,wj.rElb],[wj.rElb,wj.rHnd],[wj.rHip,wj.rKne],[wj.rKne,wj.rFt],[wj.chest||wj.rSh,wj.head]];
+    for(const[la,lb]of limbs){
+      if(Math.sin(t2*7+la.x*0.01)>0.3){
+        const segs=3;gg.beginPath();gg.moveTo(la.x,la.y);
+        for(let s=1;s<=segs;s++){
+          const fr=s/segs;
+          gg.lineTo(la.x+(lb.x-la.x)*fr+(Math.random()-0.5)*10*S,la.y+(lb.y-la.y)*fr+(Math.random()-0.5)*6*S);
+        }
+        gg.strokePath();
+      }
+    }
+
+    // Rim energy ring
+    const ringY2=cy-18*S;
+    gg.lineStyle(2,c,0.3*glowA2);
+    gg.beginPath();
+    for(let i=0;i<=32;i++){
+      const ang=t2*2+i*(Math.PI*2/32);
+      const px=cx+Math.cos(ang)*36*S;
+      const py=ringY2+Math.sin(ang)*12*S;
+      if(i===0)gg.moveTo(px,py);else gg.lineTo(px,py);
+    }
+    gg.strokePath();
+
+    // Ground light pool
+    const gf2=0.7+Math.sin(t2*4)*0.3;
+    gg.fillStyle(c,0.10*gf2);gg.fillEllipse(cx,f.y+2,70*S,8*S);
+    gg.fillStyle(c,0.06*gf2);gg.fillEllipse(cx,f.y+4,100*S,5*S);
+    for(let i=0;i<4;i++){
+      const gx=cx+Math.sin(t2*3+i*1.7)*40*S;
+      gg.fillStyle(c,0.15*gf2);gg.fillCircle(gx,f.y+2,2.5*S);
+    }
+    // Floating particles
+    for(let i=0;i<6;i++){
+      const px=cx+Math.sin(t2*1.5+i*1.05)*45*S;
+      const py=cy-22*S+Math.cos(t2*2+i*0.8)*50*S;
+      const pa=0.15+Math.sin(t2*4+i*1.3)*0.15;
+      gg.fillStyle(c,pa*glowA2);gg.fillCircle(px,py,1.5+Math.sin(t2*3+i)*0.8);
+    }
 
     const bd=f.stunTimer>0?0x1a0828:0x060610;const bm=f.stunTimer>0?0x200a30:0x0a0a18;
     g.fillStyle(bd);taperedLimb(g,wj.lHip.x,wj.lHip.y,wj.lKne.x,wj.lKne.y,16*S,13*S);taperedLimb(g,wj.lKne.x,wj.lKne.y,wj.lFt.x,wj.lFt.y,13*S,10*S);g.fillRoundedRect(wj.lFt.x-5*S,wj.lFt.y-4*S,12*S*dir,8*S,3);g.fillCircle(wj.lFt.x,wj.lFt.y,5*S);
@@ -994,26 +1201,55 @@ export default class ArenaScene extends Phaser.Scene{
     g.lineStyle(1.5,c,0.35);g.lineBetween(wj.rSh.x,wj.rSh.y,wj.rElb.x,wj.rElb.y);g.lineBetween(wj.rElb.x,wj.rElb.y,wj.rHnd.x,wj.rHnd.y);g.lineBetween(wj.rHip.x,wj.rHip.y,wj.rKne.x,wj.rKne.y);g.lineBetween(wj.rKne.x,wj.rKne.y,wj.rFt.x,wj.rFt.y);
     g.lineStyle(1,c,0.2);g.lineBetween(wj.lSh.x,wj.lSh.y,wj.lElb.x,wj.lElb.y);g.lineBetween(wj.lElb.x,wj.lElb.y,wj.lHnd.x,wj.lHnd.y);g.lineBetween(wj.lHip.x,wj.lHip.y,wj.lKne.x,wj.lKne.y);g.lineBetween(wj.lKne.x,wj.lKne.y,wj.lFt.x,wj.lFt.y);
 
-    // ═══════ ARMOR OVERLAY (stick-figure, same armorGfx depth 18) ═══════
+    // ═══════ HOLOGRAPHIC ARMOR (stick-figure path) ═══════
     if(f.armor&&!f.armor.broken&&ag){
-      const ar=f.armor;
+      const ar=f.armor;const at2=Date.now()*0.001;
+      const af2=Math.random()>0.95?0.5:1;
+
       if(ar.helmet&&ar.helmet.durability>0){
         const hdp=clamp(ar.helmet.durability/ar.helmet.maxDurability,0,1);
         const hColor=ar.helmet.tier==='heavy'?0xfbbf24:ar.helmet.tier==='medium'?0xa78bfa:0x60a5fa;
-        const hx=wj.head.x,hy=wj.head.y,hr=18*S;
-        ag.fillStyle(hColor,0.1*hdp);ag.fillCircle(hx,hy,hr);
-        ag.lineStyle(3.5,hColor,0.75*hdp);
-        ag.beginPath();ag.arc(hx,hy,hr,-Math.PI,0,false);ag.strokePath();
-        ag.lineStyle(1.5,hColor,0.3*hdp);ag.strokeCircle(hx,hy,hr+4);
+        const hx=wj.head.x,hy=wj.head.y,hr=20*S;
+        const vp=0.7+Math.sin(at2*4)*0.3;
+        ag.fillStyle(hColor,0.06*hdp*vp);ag.fillCircle(hx,hy-4*S,hr+6*S);
+        ag.lineStyle(3,hColor,0.8*hdp*vp*af2);
+        ag.beginPath();ag.arc(hx,hy-2*S,hr,-Math.PI*0.85,-Math.PI*0.15,false);ag.strokePath();
+        ag.lineStyle(1.5,hColor,0.4*hdp*vp);
+        ag.beginPath();ag.arc(hx,hy-2*S,hr-4*S,-Math.PI*0.8,-Math.PI*0.2,false);ag.strokePath();
+        const scanY2=hy-hr+(at2*40%hr*2);
+        if(scanY2>hy-hr&&scanY2<hy+hr*0.3){ag.lineStyle(1,hColor,0.5*hdp);ag.lineBetween(hx-hr*0.8,scanY2,hx+hr*0.8,scanY2)}
+        for(let i=0;i<4;i++){const da=-Math.PI*0.85+i*(Math.PI*0.7/3);ag.fillStyle(hColor,0.6*hdp*vp);ag.fillCircle(hx+Math.cos(da+at2*0.5)*(hr+3*S),(hy-2*S)+Math.sin(da+at2*0.5)*(hr+3*S),1.5)}
       }
+
       if(ar.body&&ar.body.durability>0){
         const bdp=clamp(ar.body.durability/ar.body.maxDurability,0,1);
         const bColor=ar.body.tier==='heavy'?0xfbbf24:ar.body.tier==='medium'?0xa78bfa:0x60a5fa;
-        const bx=cx-16*S,by=wj.chest.y-2*S,bw=32*S,bh=cy-wj.chest.y+2*S;
-        ag.fillStyle(bColor,0.12*bdp);ag.fillRoundedRect(bx,by,bw,bh,3);
-        ag.lineStyle(3,bColor,0.7*bdp);ag.strokeRoundedRect(bx,by,bw,bh,3);
-        ag.lineStyle(1.5,bColor,0.3*bdp);
-        ag.lineBetween(cx,by,cx,by+bh);ag.lineBetween(bx,by+bh*0.45,bx+bw,by+bh*0.45);
+        const bp=0.65+Math.sin(at2*3.5)*0.35;
+        const chX=cx,chY=wj.chest?wj.chest.y:(cy-30*S),hiY=cy;
+        // Shoulders
+        const ls=cx-14*S*dir,rs=cx+14*S*dir,sy3=chY+2*S;
+        ag.fillStyle(bColor,0.10*bdp*bp);ag.fillCircle(ls,sy3,8*S);ag.fillCircle(rs,sy3,8*S);
+        ag.lineStyle(2,bColor,0.6*bdp*bp*af2);ag.strokeCircle(ls,sy3,8*S);ag.strokeCircle(rs,sy3,8*S);
+        // Chest hex
+        const cpW=22*S,cpH=20*S,cpY=chY+6*S;
+        ag.fillStyle(bColor,0.07*bdp*bp);
+        ag.beginPath();ag.moveTo(chX,cpY-cpH*0.5);ag.lineTo(chX+cpW*0.5,cpY-cpH*0.25);ag.lineTo(chX+cpW*0.5,cpY+cpH*0.25);ag.lineTo(chX,cpY+cpH*0.5);ag.lineTo(chX-cpW*0.5,cpY+cpH*0.25);ag.lineTo(chX-cpW*0.5,cpY-cpH*0.25);ag.closePath();ag.fillPath();
+        ag.lineStyle(2.5,bColor,0.7*bdp*bp*af2);
+        ag.beginPath();ag.moveTo(chX,cpY-cpH*0.5);ag.lineTo(chX+cpW*0.5,cpY-cpH*0.25);ag.lineTo(chX+cpW*0.5,cpY+cpH*0.25);ag.lineTo(chX,cpY+cpH*0.5);ag.lineTo(chX-cpW*0.5,cpY+cpH*0.25);ag.lineTo(chX-cpW*0.5,cpY-cpH*0.25);ag.closePath();ag.strokePath();
+        ag.lineStyle(1,bColor,0.25*bdp);ag.lineBetween(chX,cpY-cpH*0.5,chX,cpY+cpH*0.5);ag.lineBetween(chX-cpW*0.45,cpY,chX+cpW*0.45,cpY);
+        // Core node
+        const cr=4*S,cop=0.5+Math.sin(at2*6)*0.5;
+        ag.fillStyle(bColor,0.25*bdp*cop);ag.fillCircle(chX,cpY,cr);ag.lineStyle(1.5,bColor,0.6*bdp*cop);ag.strokeCircle(chX,cpY,cr);
+        // Hips
+        ag.fillStyle(bColor,0.06*bdp*bp);ag.fillRect(chX-9*S,hiY-6*S,18*S,12*S);
+        ag.lineStyle(2,bColor,0.5*bdp*bp*af2);ag.strokeRect(chX-9*S,hiY-6*S,18*S,12*S);
+        // Shield contour
+        ag.lineStyle(1.5,bColor,0.15*bdp*(0.4+Math.sin(at2*2)*0.15));
+        ag.beginPath();for(let i=0;i<=24;i++){const ang=i*(Math.PI*2/24);const rx=30*S+Math.sin(at2*3+i*0.5)*3*S;const ry=50*S+Math.cos(at2*2+i*0.3)*4*S;const px2=chX+Math.cos(ang)*rx;const py2=((chY+hiY)/2)+Math.sin(ang)*ry;if(i===0)ag.moveTo(px2,py2);else ag.lineTo(px2,py2)}ag.closePath();ag.strokePath();
+        // Circuit lines
+        ag.lineStyle(1,bColor,0.3*bdp*bp);
+        ag.lineBetween(ls,sy3+6*S,chX-cpW*0.3,cpY-cpH*0.3);ag.lineBetween(rs,sy3+6*S,chX+cpW*0.3,cpY-cpH*0.3);
+        ag.lineBetween(chX-cpW*0.2,cpY+cpH*0.4,chX-9*S,hiY-6*S);ag.lineBetween(chX+cpW*0.2,cpY+cpH*0.4,chX+9*S,hiY-6*S);
       }
     }
 
