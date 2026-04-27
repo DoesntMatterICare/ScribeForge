@@ -181,7 +181,7 @@ function mkFighter(id,name,el,col,right){
     specialCd:0,specialMax:SPECIAL_CD,
     weaponVerts:[],weaponPhysics:null,weaponSpecial:null,isDummy:false,
     gfx:null,glowGfx:null,trailGfx:null,nameGfx:null,
-    bleedTimer:0,bleedDPS:0,stunTimer:0,hitStop:0,
+    bleedTimer:0,bleedDPS:0,stunTimer:0,hitStop:0,inkDrops:[],weaponTrailPts:[],hitFlashTimer:0,
     swingProgress:0,swingEasing:easeOutQuad,
     trails:[],trailTimer:0,wasAirborne:false,landDust:false,
     // Dodge
@@ -197,6 +197,8 @@ function mkFighter(id,name,el,col,right){
     roundWins:0,
     // Grab
     grabbed:false,grabbedBy:null,
+    // Parry
+    inParryStance:false,parryWindow:0,parryStunned:false,
   };
 }
 
@@ -273,6 +275,7 @@ export default class ArenaScene extends Phaser.Scene{
   constructor(){super({key:'ArenaScene'})}
 
   preload(){
+    this.load.image('paper','/textures/squared-paper-texture.jpg');
     this.spriteRenderers=[];
     const r=new P1SpriteRenderer(this);
     r.preload();
@@ -323,7 +326,7 @@ export default class ArenaScene extends Phaser.Scene{
     this.mode=d.mode||'practice';this.onEvent=d.onEvent||(()=>{});
     this.f=[];this.matchOn=false;this.timer=ROUND_TIME;this.inputBuf=[];
     this.currentRound=1;this.roundOver=false;this.transitioning=false;
-    this.gameSpeed=1;this.koActive=false;this.koTimer=0;
+    this.gameSpeed=1;this.koActive=false;this.koTimer=0;this.parryActive=false;
     this.winStreak=parseInt(localStorage.getItem('scrib_winstreak')||'0');
   }
 
@@ -358,7 +361,7 @@ export default class ArenaScene extends Phaser.Scene{
       f.gfx=this.add.graphics().setDepth(10);f.glowGfx=this.add.graphics().setDepth(9);
       f.trailGfx=this.add.graphics().setDepth(8);
       f.armorGfx=this.add.graphics().setDepth(18);
-      f.nameGfx=this.add.text(0,0,pd.name,{fontFamily:'Space Grotesk',fontSize:'18px',color:'#ffffffcc',stroke:'#000',strokeThickness:4,fontStyle:'700'}).setOrigin(0.5).setDepth(12);
+      f.nameGfx=this.add.text(0,0,pd.name,{fontFamily:'Permanent Marker',fontSize:'18px',color:'#1a1a1a',stroke:'#fff',strokeThickness:3}).setOrigin(0.5).setDepth(12);
       return f;
     };
     const p1=this.pData[0]||{id:'local',name:'Fighter',weapon:{element:'fire'}};
@@ -376,26 +379,34 @@ export default class ArenaScene extends Phaser.Scene{
     this.input.mouse?.disableContextMenu();
 
     this.hudGfx=this.add.graphics().setDepth(50);
-    this.timerText=this.add.text(W/2,32,'99',{fontFamily:'Unbounded',fontSize:'36px',color:'#FFE66D',stroke:'#000',strokeThickness:5}).setOrigin(0.5).setDepth(51);
-    this.p1Nm=this.add.text(140,12,f1.name,{fontFamily:'Space Grotesk',fontSize:'20px',color:'#fff',stroke:'#000',strokeThickness:4,fontStyle:'bold'}).setDepth(51);
-    this.p2Nm=this.add.text(W-140,12,f2.name,{fontFamily:'Space Grotesk',fontSize:'20px',color:'#fff',stroke:'#000',strokeThickness:4,fontStyle:'bold'}).setOrigin(1,0).setDepth(51);
-    this.comboText=this.add.text(W/2,H*0.28,'',{fontFamily:'Unbounded',fontSize:'36px',color:'#FFE66D',stroke:'#000',strokeThickness:6}).setOrigin(0.5).setDepth(51).setAlpha(0);
-    this.roundText=this.add.text(W/2,H*0.20,'',{fontFamily:'Unbounded',fontSize:'32px',color:'#C9A0FF',stroke:'#000',strokeThickness:5}).setOrigin(0.5).setDepth(51).setAlpha(0);
-    this.koText=this.add.text(W/2,H*0.38,'',{fontFamily:'Unbounded',fontSize:'82px',color:'#FF8A76',stroke:'#000',strokeThickness:8}).setOrigin(0.5).setDepth(55).setAlpha(0);
-    this.tauntText=this.add.text(W/2,H*0.70,'',{fontFamily:'Space Grotesk',fontSize:'20px',fontStyle:'bold',color:'#FFE66D',stroke:'#000',strokeThickness:5,wordWrap:{width:600},padding:{x:12,y:6}}).setOrigin(0.5).setDepth(52).setAlpha(0);
+    this.timerText=this.add.text(W/2,32,'99',{fontFamily:'Permanent Marker',fontSize:'36px',color:'#E63946',stroke:'#1a1a1a',strokeThickness:4}).setOrigin(0.5).setDepth(51);
+    this.p1Nm=this.add.text(140,12,f1.name,{fontFamily:'Permanent Marker',fontSize:'22px',color:'#1a1a1a',stroke:'#fff',strokeThickness:3}).setDepth(51);
+    this.p2Nm=this.add.text(W-140,12,f2.name,{fontFamily:'Permanent Marker',fontSize:'22px',color:'#1a1a1a',stroke:'#fff',strokeThickness:3}).setOrigin(1,0).setDepth(51);
+    this.comboText=this.add.text(W/2,H*0.28,'',{fontFamily:'Permanent Marker',fontSize:'36px',color:'#E63946',stroke:'#1a1a1a',strokeThickness:5}).setOrigin(0.5).setDepth(51).setAlpha(0);
+    this.roundText=this.add.text(W/2,H*0.20,'',{fontFamily:'Permanent Marker',fontSize:'32px',color:'#2196F3',stroke:'#1a1a1a',strokeThickness:4}).setOrigin(0.5).setDepth(51).setAlpha(0);
+    this.koText=this.add.text(W/2,H*0.38,'',{fontFamily:'Permanent Marker',fontSize:'82px',color:'#E63946',stroke:'#1a1a1a',strokeThickness:7}).setOrigin(0.5).setDepth(55).setAlpha(0);
+    this.tauntText=this.add.text(W/2,H*0.70,'',{fontFamily:'Caveat',fontSize:'22px',fontStyle:'bold',color:'#1a1a1a',stroke:'#fff',strokeThickness:4,wordWrap:{width:600},padding:{x:12,y:6}}).setOrigin(0.5).setDepth(52).setAlpha(0);
 
     // Particles
-    this.slashFx=this.add.particles(0,0,'sp',{speed:{min:120,max:400},scale:{start:1.3,end:0},lifespan:400,tint:[0xfbbf24,0xffffff,0xff8c00],blendMode:'ADD',frequency:-1,quantity:20}).setDepth(20);
-    this.bluntFx=this.add.particles(0,0,'sp',{speed:{min:50,max:160},scale:{start:2,end:0},lifespan:500,tint:[0x94a3b8,0xffffff,0xcbd5e1],blendMode:'ADD',frequency:-1,quantity:16}).setDepth(20);
-    this.pierceFx=this.add.particles(0,0,'sp',{speed:{min:150,max:420},scale:{start:0.8,end:0},lifespan:320,tint:[0xf472b6,0xe8eaf6,0xfb7185],blendMode:'ADD',frequency:-1,quantity:22}).setDepth(20);
-    this.shockFx=this.add.particles(0,0,'sp',{speed:{min:80,max:320},scale:{start:2.5,end:0},lifespan:700,tint:[0xa78bfa,0x60a5fa,0xc084fc],blendMode:'ADD',frequency:-1,quantity:30}).setDepth(20);
-    this.bleedFx=this.add.particles(0,0,'sp',{speed:{min:10,max:50},scale:{start:0.5,end:0},lifespan:700,tint:[0xf87171,0xef4444],blendMode:'ADD',frequency:-1,quantity:5}).setDepth(20);
-    this.dustFx=this.add.particles(0,0,'sp',{speed:{min:20,max:60},angle:{min:240,max:300},scale:{start:0.8,end:0},lifespan:400,tint:[0x8b7355,0x6b5b45],blendMode:'NORMAL',frequency:-1,quantity:6}).setDepth(5);
-    this.shatterFx=this.add.particles(0,0,'sp',{speed:{min:100,max:300},scale:{start:1.2,end:0},lifespan:600,tint:[0xfbbf24,0xff6b00,0xffffff],blendMode:'ADD',frequency:-1,quantity:24}).setDepth(20);
+    this.slashFx=this.add.particles(0,0,'sp',{speed:{min:120,max:400},scale:{start:1.3,end:0},lifespan:400,tint:[0x1a1a1a,0xE63946,0x333333],blendMode:'NORMAL',frequency:-1,quantity:20}).setDepth(20);
+    this.bluntFx=this.add.particles(0,0,'sp',{speed:{min:50,max:160},scale:{start:2,end:0},lifespan:500,tint:[0x1a1a1a,0x555555,0x2196F3],blendMode:'NORMAL',frequency:-1,quantity:16}).setDepth(20);
+    this.pierceFx=this.add.particles(0,0,'sp',{speed:{min:150,max:420},scale:{start:0.8,end:0},lifespan:320,tint:[0xE63946,0x1a1a1a,0xcc2233],blendMode:'NORMAL',frequency:-1,quantity:22}).setDepth(20);
+    this.shockFx=this.add.particles(0,0,'sp',{speed:{min:80,max:320},scale:{start:2.5,end:0},lifespan:700,tint:[0x1a1a1a,0x2196F3,0xE63946],blendMode:'NORMAL',frequency:-1,quantity:30}).setDepth(20);
+    this.bleedFx=this.add.particles(0,0,'sp',{speed:{min:10,max:50},scale:{start:0.5,end:0},lifespan:700,tint:[0xE63946,0xcc0000],blendMode:'NORMAL',frequency:-1,quantity:5}).setDepth(20);
+    this.dustFx=this.add.particles(0,0,'sp',{speed:{min:20,max:60},angle:{min:240,max:300},scale:{start:0.8,end:0},lifespan:400,tint:[0xb0a898,0x8a7e72],blendMode:'NORMAL',frequency:-1,quantity:6}).setDepth(5);
+    this.shatterFx=this.add.particles(0,0,'sp',{speed:{min:100,max:300},scale:{start:1.2,end:0},lifespan:600,tint:[0x1a1a1a,0xE63946,0x2196F3],blendMode:'NORMAL',frequency:-1,quantity:24}).setDepth(20);
     this.impactGfx=this.add.graphics().setDepth(25);
     this.vignetteGfx=this.add.graphics().setDepth(45);
 
-    this.add.text(W/2,H-16,'A/D Move | W Jump | S Crouch | J Slash | K Heavy | L Kick | I Block | Double-tap A/D Dodge | fwd+fwd+L Special',{fontFamily:'Space Grotesk',fontSize:'13px',color:'#88C8E8',fontStyle:'bold',stroke:'#000',strokeThickness:2}).setOrigin(0.5).setDepth(51);
+    // ═══════ NEW FX LAYERS ═══════
+    // decalGfx sits just above the background so slash marks look burned into the floor
+    this.decalGfx=this.add.graphics().setDepth(3);
+    // fxGfx is used for block shockwave rings (above fighters, below HUD)
+    this.fxGfx=this.add.graphics().setDepth(22);
+    this.floorDecals=[];   // [{x,dir,alpha,life,maxLife,spread,rot}]
+    this.shockRings=[];    // [{x,y,r,life,maxLife}]
+
+    this.add.text(W/2,H-16,'A/D Move | W Jump | S Crouch | J Slash | K Heavy | L Kick | I Block | Double-tap A/D Dodge | fwd+fwd+L Special',{fontFamily:'Caveat',fontSize:'15px',color:'#1a1a1a',fontStyle:'bold'}).setOrigin(0.5).setDepth(51);
 
     // ═══════ PIXEL ART SPRITE SETUP (both fighters) ═══════
     if(this.spriteRenderers&&this.spriteRenderers.length>=2){
@@ -436,16 +447,15 @@ export default class ArenaScene extends Phaser.Scene{
 
     // ═══════ CLICK TO START (unlocks AudioContext for Chrome/Safari) ═══════
     const overlay=this.add.graphics().setDepth(100);
-    overlay.fillStyle(0x05050a,0.9);overlay.fillRect(0,0,W,H);
-    // Neo Brutalist decorative border
-    overlay.lineStyle(4,0xFFE66D,0.3);overlay.strokeRect(30,30,W-60,H-60);
-    overlay.lineStyle(2,0xFF8AC4,0.15);overlay.strokeRect(40,40,W-80,H-80);
+    overlay.fillStyle(0xfdf8f0,0.92);overlay.fillRect(0,0,W,H);
+    overlay.lineStyle(5,0x1a1a1a,0.7);overlay.strokeRect(28,28,W-56,H-56);
+    overlay.lineStyle(3,0x1a1a1a,0.2);overlay.strokeRect(36,36,W-72,H-72);
     const clickText=this.add.text(W/2,H/2,'CLICK TO FIGHT',{
-      fontFamily:'Unbounded',fontSize:'44px',color:'#FFE66D',
-      stroke:'#000',strokeThickness:7,
+      fontFamily:'Permanent Marker',fontSize:'52px',color:'#E63946',
+      stroke:'#1a1a1a',strokeThickness:5,
     }).setOrigin(0.5).setDepth(101);
-    const subText=this.add.text(W/2,H/2+52,'Press anywhere to enter the arena',{
-      fontFamily:'Space Grotesk',fontSize:'18px',color:'#88C8E8',fontStyle:'bold',stroke:'#000',strokeThickness:3,
+    const subText=this.add.text(W/2,H/2+60,'tap anywhere to enter the arena',{
+      fontFamily:'Caveat',fontSize:'24px',color:'#1a1a1a',fontStyle:'bold',
     }).setOrigin(0.5).setDepth(101);
     this.tweens.add({targets:clickText,alpha:{from:0.4,to:1},duration:900,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
     this.input.once('pointerdown',()=>{
@@ -462,7 +472,11 @@ export default class ArenaScene extends Phaser.Scene{
 
   startRound(){
     this.transitioning=true;this.roundOver=false;this.koActive=false;
-    this.gameSpeed=1;this.timer=ROUND_TIME;
+    this.gameSpeed=1;this.timer=ROUND_TIME;this.parryActive=false;
+    // Reset camera to default state
+    this.cameras.main.stopFollow();
+    this.cameras.main.setZoom(1);
+    this.cameras.main.pan(W/2,H/2,1,'Linear',true);
     // Reset fighters
     for(let i=0;i<this.f.length;i++){
       const f=this.f[i];
@@ -507,24 +521,39 @@ export default class ArenaScene extends Phaser.Scene{
   }
 
   drawBg(){
-    const bg=this.add.graphics().setDepth(0);
-    for(let y=0;y<FLOOR;y+=2){const t=y/FLOOR;bg.fillStyle(Phaser.Display.Color.GetColor(Math.floor(14+t*45),Math.floor(10+t*25),Math.floor(32+t*50)));bg.fillRect(0,y,W,2)}
-    // Subtle grid pattern — Neo Brutalist
-    bg.lineStyle(1,0xffffff,0.015);
-    for(let x=0;x<W;x+=60){bg.lineBetween(x,0,x,FLOOR)}
-    for(let y=0;y<FLOOR;y+=60){bg.lineBetween(0,y,W,y)}
-    bg.fillStyle(0xC9A0FF,0.04);bg.fillCircle(W/2,FLOOR-20,180);bg.fillStyle(0xFF8AC4,0.03);bg.fillCircle(W/2,FLOOR-10,100);
-    const m=(c,pts)=>{bg.fillStyle(c);bg.beginPath();bg.moveTo(0,FLOOR);for(const[x,y]of pts)bg.lineTo(x,FLOOR-y);bg.lineTo(W,FLOOR);bg.closePath();bg.fillPath()};
-    m(0x161228,[[100,60],[200,110],[350,40],[500,85],[650,130],[800,50],[950,100],[1100,65],[1200,35]]);
-    m(0x10091e,[[0,25],[150,65],[300,90],[450,35],[600,55],[750,80],[900,45],[1050,70],[1200,25]]);
-    m(0x0a0516,[[50,15],[200,35],[400,25],[550,40],[700,30],[900,22],[1100,32],[1200,10]]);
-    bg.fillStyle(0x080412);bg.fillRect(0,FLOOR,W,H-FLOOR);
-    // Thick floor line — Neo Brutalist
-    bg.lineStyle(4,0xFFE66D,0.15);bg.lineBetween(0,FLOOR,W,FLOOR);
-    bg.lineStyle(2,0xFFE66D,0.06);bg.lineBetween(0,FLOOR+2,W,FLOOR+2);
+    // ═══ Paper texture base ═══
+    const paper=this.add.image(0,0,'paper').setOrigin(0,0).setDepth(0);
+    paper.setDisplaySize(W,H);
+    paper.setAlpha(0.92);
+
+    const bg=this.add.graphics().setDepth(1);
+
+    // Slight warm tint overlay so the grid paper reads as arena, not editor
+    bg.fillStyle(0xfdf8f0,0.18);bg.fillRect(0,0,W,H);
+
+    // Floor shadow (beneath characters)
+    bg.fillStyle(0x1a1a1a,0.06);bg.fillEllipse(W/2,FLOOR+6,W*0.85,22);
+
+    // Floor line — thick black marker stroke, slightly wobbly via 3 offset lines
+    bg.lineStyle(5,0x1a1a1a,0.9);bg.lineBetween(0,FLOOR,W,FLOOR);
+    bg.lineStyle(3,0x1a1a1a,0.3);bg.lineBetween(0,FLOOR+3,W,FLOOR+3);
+    bg.lineStyle(2,0x1a1a1a,0.12);bg.lineBetween(0,FLOOR-2,W,FLOOR-2);
+
+    // Tick marks along floor — like a ruled notebook
+    bg.lineStyle(2,0x1a1a1a,0.25);
+    for(let x=60;x<W;x+=60){bg.lineBetween(x,FLOOR,x,FLOOR+8);}
+
+    // Arena boundary scribble lines (left + right walls, faint)
+    bg.lineStyle(3,0x1a1a1a,0.08);
+    bg.lineBetween(60,0,60,FLOOR);
+    bg.lineBetween(W-60,0,W-60,FLOOR);
+
+    // Below floor fill — off-white, not black
+    bg.fillStyle(0xece8df,1);bg.fillRect(0,FLOOR+5,W,H-FLOOR);
   }
 
   onKeyDown(key){
+    if(key==='ESCAPE'&&(this.mode==='training'||this.mode==='practice')){this.togglePause();return;}
     const f=this.f[0];if(!f||f.hp<=0||!this.matchOn||this.transitioning)return;
     const fwd=f.facingRight?'D':'A',bck=f.facingRight?'A':'D';
     const mapped=key===fwd?'F':key===bck?'B':key;
@@ -550,6 +579,7 @@ export default class ArenaScene extends Phaser.Scene{
     f.vx=dir*DODGE_SPD;f.attacking=false;f.blocking=false;
     this.setAnim(f,DODGE_ANIM.frames,false);
     this.dustFx.setPosition(f.x,FLOOR);this.dustFx.emitParticle(4);
+    this.spawnSpeedLines(f);
     this.sfx?.dodge();
   }
 
@@ -686,7 +716,11 @@ export default class ArenaScene extends Phaser.Scene{
     const blocked=def.blocking&&!a.unblockable&&!a.pierceBlock;
     if(blocked){
       this.sfx?.block();
-      if(def.parryTimer&&def.parryTimer>0){this.doParry(atk,def);return}
+      this.spawnBlockRing(hx,hy);
+      // ═══ PARRY CHECK — fresh block press + stamina + not an unparriable attack ═══
+      const canParry=def.parryTimer>0&&def.inParryStance&&def.stamina>=15
+        &&!a.unparriable&&!a.pierceBlock&&atk.currentAtk!=='special_lunge';
+      if(canParry){this.doParry(atk,def);return}
       const atkBB=wp?.blockBreak||0,defParry=def.weaponPhysics?.parry||0.3;
       if(atkBB>defParry+0.2){
         dmg*=0.8;def.hitStun=400;def.blocking=false;
@@ -739,6 +773,15 @@ export default class ArenaScene extends Phaser.Scene{
       }
     }
     def.hp=Math.max(0,def.hp-dmg);
+    // ═══════ SLASH FLOOR DECAL ═══════
+    if(a.type==='slash'&&!blocked)this.spawnSlashDecal(hx,atk.facingRight?1:-1);
+    // ═══════ DAMAGE NUMBER POP-UP ═══════
+    this.spawnDmgNumber(hx,hy-14*S,dmg,blocked);
+    // ═══════ RED INK SPLAT ON HIT ═══════
+    if(!def.inkDrops)def.inkDrops=[];
+    const _dc=Math.min(3+Math.floor(dmg/7),9);
+    for(let _i=0;_i<_dc;_i++){def.inkDrops.push({x:hx+(Math.random()-0.5)*26,y:hy+(Math.random()-0.5)*14,vx:(Math.random()-0.5)*3.5,vy:-1.2-Math.random()*3,life:520+Math.random()*380,alpha:1,size:2.2+Math.random()*3.8});}
+    def.hitFlashTimer=110;
     // Register hit type for sprite animation variation
     if(def.useSprite&&def.spriteRenderer){def.spriteRenderer.registerHit(a.hj);}
     const kbDir=atk.facingRight?1:-1;def.vx=a.kb*kbDir*(wp?(0.8+(wp.mass||5)*0.04):1);
@@ -780,12 +823,34 @@ export default class ArenaScene extends Phaser.Scene{
   }
 
   doParry(atk,def){
+    // ── Punish the attacker ──
+    const kbDir=atk.facingRight?-1:1;
     atk.hitStun=500;atk.hitStop=80;
+    atk.vx=kbDir*9;                                      // knocked back
+    atk.stamina=Math.max(0,atk.stamina-30);              // stamina drain
+    atk.parryStunned=true;                               // extra jitter / wobble
     this.setAnim(atk,[{d:120,p:'hitReact'},{d:180,p:'hitReact2'},{d:250,p:'idle1'}],false);
+
+    // ── Reward the defender ──
+    def.stamina=Math.min(def.maxStamina,def.stamina+15); // stamina refund
+    def.parryWindow=400;                                  // free punish timer (ms)
+    def.inParryStance=false;                              // consume the parry stance
+
+    // ── Cinematic: slow-mo + zoom in on contact ──
+    this.triggerParryCinematic(atk,def);
+
+    // ── Visual & audio FX ──
+    const fx_x=(atk.x+def.x)/2,fx_y=def.y-30*S;
     this.cameras.main.flash(120,255,255,255,true);
-    this.slashFx.setPosition((atk.x+def.x)/2,def.y-30*S);this.slashFx.emitParticle(24);
+    this.cameras.main.shake(140,0.02);
+    this.slashFx.setPosition(fx_x,fx_y);this.slashFx.emitParticle(28);
     this.sfx?.parry();
-    // AUTO COUNTER-STRIKE after parry
+
+    // Taunt popup — "PARRY!" style
+    const tPool=['PARRY!','PERFECT!','READ!','DEFLECTED!'];
+    this.showTaunt(tPool,0,def);
+
+    // AUTO COUNTER-STRIKE after parry window opens
     this.time.delayedCall(150,()=>{
       if(def.hp>0&&!def.attacking&&atk.hp>0){
         this.sfx?.counter();
@@ -794,14 +859,56 @@ export default class ArenaScene extends Phaser.Scene{
     });
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // PARRY CINEMATIC — slow-mo zoom-in on contact, zoom-out on exit
+  // All timings are in real-world ms (rawDt / unaffected by gameSpeed)
+  // ═══════════════════════════════════════════════════════════════
+  triggerParryCinematic(atk,def){
+    if(this.parryActive||this.koActive)return;
+    this.parryActive=true;
+
+    // ── Save state ──
+    this._preParrySpeed=this.gameSpeed;
+
+    // ── Extreme slow-mo — snap immediately ──
+    this.gameSpeed=0.06;
+
+    // ── Target point: midway between the two fighters, slightly above centre ──
+    const focusX=(atk.x+def.x)/2;
+    const focusY=(atk.y+def.y)/2-40*S;
+
+    // ── Phase 1: zoom IN over 280ms real time ──
+    this.cameras.main.pan(focusX,focusY,280,'Sine.easeOut',true);
+    this.cameras.main.zoomTo(2.0,280,'Sine.easeOut',true);
+
+    // ── Phase 2: hold for ~600ms at peak zoom (slow-mo makes it feel long) ──
+    // ── Phase 3: zoom OUT + restore speed — triggered at ~880ms real time ──
+    this.time.delayedCall(880,()=>{
+      // Ease back to full-speed world centre
+      this.cameras.main.pan(W/2,H/2,320,'Sine.easeInOut',true);
+      this.cameras.main.zoomTo(1.0,320,'Sine.easeInOut',true);
+
+      // Ramp gameSpeed back up smoothly via a tiny tween on this object
+      const speedObj={v:this.gameSpeed};
+      const targetSpeed=this._preParrySpeed||1;
+      this.tweens.add({
+        targets:speedObj,v:targetSpeed,duration:320,ease:'Sine.easeIn',
+        onUpdate:()=>{this.gameSpeed=speedObj.v;},
+        onComplete:()=>{this.gameSpeed=targetSpeed;this.parryActive=false;}
+      });
+    });
+  }
+
   setAnim(f,frames,loop){f.fi=0;f.ft=0;f.animFrames=frames;f.animLoop=loop;f.target={...P[frames[0].p]};f.attacking=false;f.currentAtk=null;f.swingProgress=0}
 
   handleInput(f){
     if(f.hitStun>0||f.hp<=0||f.stunTimer>0||f.dodging||f.knockedDown)return;
     if(this.keys.I.isDown&&!f.attacking){
-      f.blocking=true;if(!f.parryTimer)f.parryTimer=PARRY_WIN;
+      f.blocking=true;
+      // Fresh press: open parry window and mark stance (JustDown equivalent via parryTimer===0)
+      if(!f.parryTimer){f.parryTimer=PARRY_WIN;f.inParryStance=true;}
       this.setAnim(f,this.keys.S.isDown?[{d:100,p:'crouch'}]:BLOCK_ANIM.frames,true);f.vx=0;return}
-    if(f.blocking){f.blocking=false;f.parryTimer=0}
+    if(f.blocking){f.blocking=false;f.parryTimer=0;f.inParryStance=false;}
     if(f.attacking)return;
     if(this.keys.S.isDown&&f.grounded){f.crouching=true;this.setAnim(f,CROUCH_ANIM.frames,true);f.vx=0;return}
     f.crouching=false;
@@ -814,7 +921,76 @@ export default class ArenaScene extends Phaser.Scene{
       else if(f.grounded)this.setAnim(f,IDLE_ANIM.frames,true)}
   }
 
-  dummyLogic(f){if(f.hp<=0)return;const t=this.f.find(o=>o.id!==f.id);if(t)f.facingRight=t.x>f.x;if(t?.attacking&&Math.random()<0.02){f.blocking=true;this.setAnim(f,BLOCK_ANIM.frames,true)}else if(f.blocking&&Math.random()<0.05){f.blocking=false;this.setAnim(f,IDLE_ANIM.frames,true)}}
+  dummyLogic(f,dt){
+    if(f.hp<=0||f.knockedDown)return;
+    const t=this.f.find(o=>o.id!==f.id);
+    if(!t||t.hp<=0)return;
+    f.facingRight=t.x>f.x;
+    const dist=Math.abs(f.x-t.x);
+    const dir=f.facingRight?1:-1;
+
+    // Init AI state
+    if(f.aiTimer===undefined){f.aiTimer=0;f.aiReactCd=0;f.aiBlockTimer=0;}
+    f.aiTimer-=dt;f.aiReactCd-=dt;f.aiBlockTimer-=dt;
+
+    // Unblock after blocking window
+    if(f.blocking){
+      if(f.aiBlockTimer<=0){f.blocking=false;this.setAnim(f,IDLE_ANIM.frames,true);}
+      return;
+    }
+    if(f.attacking||f.dodging||f.hitStun>0||f.stunTimer>0)return;
+
+    // React to incoming attack — dodge or block
+    if(t.attacking&&f.aiReactCd<=0){
+      f.aiReactCd=900;
+      if(f.stamina>=DODGE_COST&&Math.random()<0.4){
+        this.execDodge(f,dist>60?-dir:dir);return;
+      }else if(Math.random()<0.55){
+        f.blocking=true;f.aiBlockTimer=400+Math.random()*300;
+        this.setAnim(f,BLOCK_ANIM.frames,true);f.vx=0;return;
+      }
+    }
+
+    // Decision tick
+    if(f.aiTimer>0){
+      // Keep walking toward player between decisions if far
+      if(dist>130&&!f.attacking)f.vx=dir*SPD*0.75;
+      return;
+    }
+    f.aiTimer=280+Math.random()*320;
+
+    const isBare=f.bareHanded;
+    const close=dist<85;
+    const mid=dist<170;
+
+    if(close){
+      // Grab attempt
+      if(!isBare&&f.grounded&&!t.grabbed&&f.stamina>=15&&dist<75&&Math.random()<0.12){
+        this.execGrab(f,t);return;
+      }
+      // Special
+      if(!isBare&&f.specialCd<=0&&f.stamina>=25&&Math.random()<0.18){
+        this.execAttack(f,this.getSpecialType(f));return;
+      }
+      // Normal attacks — weighted toward faster moves
+      const pool=isBare
+        ?['jab','jab','strongPunch','highKick','frontKick','uppercut','lowSweep','crouchJab']
+        :['slash','slash','jab','strongPunch','heavySlash','highKick','uppercut','dblSlash','lowSweep','frontKick','backKick'];
+      this.execAttack(f,pool[Math.floor(Math.random()*pool.length)]);
+    }else if(mid){
+      if(Math.random()<0.45){
+        this.execAttack(f,Math.random()<0.5?'highKick':'frontKick');
+      }else{
+        f.vx=dir*SPD;
+      }
+      // Occasional jump approach
+      if(f.grounded&&Math.random()<0.1){f.vy=JUMP;f.grounded=false;}
+    }else{
+      // Far — rush in
+      f.vx=dir*SPD;
+      if(f.grounded&&Math.random()<0.06){f.vy=JUMP;f.grounded=false;}
+    }
+  }
 
   updateFighter(f,dt){
     if(f.hitStop>0){f.hitStop-=dt;return}
@@ -858,18 +1034,40 @@ export default class ArenaScene extends Phaser.Scene{
     if(f.hitStun>0&&!f.knockedDown){f.hitStun-=dt;if(f.hitStun<=0&&f.hp>0)this.setAnim(f,IDLE_ANIM.frames,true)}
     if(f.atkCd>0)f.atkCd-=dt;if(f.comboT>0){f.comboT-=dt;if(f.comboT<=0)f.combo=0}
     if(f.specialCd>0)f.specialCd-=dt;if(f.parryTimer>0)f.parryTimer-=dt;
+    if(f.parryWindow>0){f.parryWindow-=dt;if(f.parryWindow<=0)f.parryWindow=0;}
+    if(f.parryStunned&&f.hitStun<=0)f.parryStunned=false;
     if(f.stunTimer>0)f.stunTimer-=dt;
-    if(f.bleedTimer>0&&f.hp>0){f.bleedTimer-=dt;f.hp=Math.max(0,f.hp-(f.bleedDPS||2)*(dt/1000));if(Math.random()<0.04){this.bleedFx.setPosition(f.x,f.y-20*S);this.bleedFx.emitParticle(3)}}
+    if(f.bleedTimer>0&&f.hp>0){f.bleedTimer-=dt;f.hp=Math.max(0,f.hp-(f.bleedDPS||2)*(dt/1000));if(Math.random()<0.04){this.bleedFx.setPosition(f.x,f.y-20*S);this.bleedFx.emitParticle(3)}
+      // Continuous bleed drips from body
+      if(Math.random()<0.07){if(!f.inkDrops)f.inkDrops=[];f.inkDrops.push({x:f.x+(Math.random()-0.5)*18*S,y:f.y-28*S,vx:(Math.random()-0.5)*1.2,vy:-0.3-Math.random()*0.8,life:700+Math.random()*500,alpha:1,size:1.8+Math.random()*2.2});}}
+    // ═══════ INK DROP PHYSICS ═══════
+    if(f.inkDrops&&f.inkDrops.length>0){for(const _d of f.inkDrops){_d.vy+=0.25*(dt/16);_d.y+=_d.vy*(dt/16);_d.x+=_d.vx*(dt/16);_d.vx*=0.96;_d.life-=dt;_d.alpha=clamp(_d.life/460,0,1);}f.inkDrops=f.inkDrops.filter(_d=>_d.life>0&&_d.y<FLOOR+50);}
+    // ═══════ WEAPON TRAIL TRACKING ═══════
+    if(f.attacking&&f.weaponVerts&&f.weaponVerts.length>=3){const _wdir=f.facingRight?1:-1;const _wj2={};for(const k in f.pose)_wj2[k]={x:f.x+f.pose[k].x*_wdir*S,y:f.y+f.pose[k].y*S};const _hnd2=f.useSprite&&f.spriteRenderer?f.spriteRenderer.getHandWorldPos(f):(_wj2.rHnd||{x:f.x,y:f.y-30*S});const _ang2=_wdir>0?-0.9+f.swingEasing(f.swingProgress)*1.4:0.9-f.swingEasing(f.swingProgress)*1.4;const _c2=Math.cos(_ang2),_s2=Math.sin(_ang2);const _tv=f.weaponVerts[f.weaponVerts.length-1];const _tx=_hnd2.x+(_tv.x*_c2-_tv.y*_s2)*_wdir,_ty=_hnd2.y+(_tv.x*_s2+_tv.y*_c2);if(!f.weaponTrailPts)f.weaponTrailPts=[];f.weaponTrailPts.push({x:_tx,y:_ty,age:0,c:parseInt(f.colorHex.slice(1),16)});if(f.weaponTrailPts.length>8)f.weaponTrailPts.shift();}else{if(f.weaponTrailPts)f.weaponTrailPts=[];}
+    if(f.weaponTrailPts)for(const _tp of f.weaponTrailPts)_tp.age+=dt;
+    if(f.hitFlashTimer>0)f.hitFlashTimer-=dt;
     if(f.landDust&&f.wasAirborne){this.dustFx.setPosition(f.x,FLOOR);this.dustFx.emitParticle(8);f.landDust=false}
     // Trails
     if(f.attacking){f.trailTimer-=dt;if(f.trailTimer<=0){f.trails.push({pose:{...f.pose},x:f.x,y:f.y,alpha:0.25,life:180});if(f.trails.length>4)f.trails.shift();f.trailTimer=45}const td=f.animFrames.reduce((s,fr)=>s+fr.d,0),el=f.animFrames.slice(0,f.fi).reduce((s,fr)=>s+fr.d,0)+f.ft;f.swingProgress=clamp(el/td,0,1)}
     else f.trails=[];
+    // ═══════ SMEAR BUFFER — store pose snapshots for motion blur ═══════
+    if(!f.smearBuf)f.smearBuf=[];
+    const _fastMove=f.dodging||Math.abs(f.vx)>5;
+    if(f.attacking||_fastMove){
+      f.smearBuf.push({pose:JSON.parse(JSON.stringify(f.pose)),x:f.x,y:f.y,vx:f.vx,fastMove:_fastMove&&!f.attacking});
+      if(f.smearBuf.length>7)f.smearBuf.shift();
+    }else{
+      // Decay smear when not attacking or moving fast
+      if(f.smearBuf.length>0)f.smearBuf.shift();
+    }
     for(const tr of f.trails){tr.life-=dt;tr.alpha*=0.9}f.trails=f.trails.filter(tr=>tr.life>0&&tr.alpha>0.02);
-    // Animation
+    // ═══════ FLIPBOOK ANIMATION — snap not lerp ═══════
     f.ft+=dt;
-    const rate=f.attacking?0.04+f.swingEasing(f.swingProgress)*0.02:0.022;
-    f.pose=lerpPose(f.pose,f.target,Math.min(1,dt*rate));
     const fr=f.animFrames?.[f.fi];
+    const frameDur=fr?.d||100;
+    const snapT=f.ft/frameDur>0.4?1:0;
+    const attackRate=f.attacking?0.06+f.swingEasing(f.swingProgress)*0.04:snapT;
+    f.pose=lerpPose(f.pose,f.target,Math.min(1,f.attacking?dt*attackRate:snapT));
     if(fr&&f.ft>=fr.d){f.ft=0;f.fi++;if(f.fi>=f.animFrames.length){if(f.animLoop)f.fi=0;else{f.fi=f.animFrames.length-1;if(f.attacking){f.attacking=false;f.atkCd=140;f.currentAtk=null;f.swingProgress=0;this.setAnim(f,IDLE_ANIM.frames,true)}}}const nf=f.animFrames[f.fi];if(nf)f.target={...P[nf.p]}}
   }
 
@@ -911,11 +1109,104 @@ export default class ArenaScene extends Phaser.Scene{
     // stays bareHanded
   }
 
+  drawSmear(f,tg,currentWj,dir){
+    const _smearActive=f.attacking||(f.smearBuf&&f.smearBuf.some(s=>s.fastMove));
+    if(!f.smearBuf||f.smearBuf.length<2||!_smearActive)return;
+    const c=parseInt(f.colorHex.slice(1),16);
+    const count=f.smearBuf.length;
+
+    // Draw ghost frames — oldest = most faded
+    for(let i=0;i<count;i++){
+      const snap=f.smearBuf[i];
+      const alpha=((i+1)/count)*0.18; // 0.03 → 0.18
+      const swj={};
+      for(const k in snap.pose){
+        swj[k]={x:snap.x+snap.pose[k].x*dir*S,y:snap.y+snap.pose[k].y*S};
+      }
+      swj.hip={x:snap.x,y:snap.y};
+
+      // Ghost body — simplified outline only
+      tg.lineStyle(3,c,alpha);
+      if(swj.rSh&&swj.rElb)tg.lineBetween(swj.rSh.x,swj.rSh.y,swj.rElb.x,swj.rElb.y);
+      if(swj.rElb&&swj.rHnd)tg.lineBetween(swj.rElb.x,swj.rElb.y,swj.rHnd.x,swj.rHnd.y);
+      if(swj.lSh&&swj.rSh)tg.lineBetween(swj.lSh.x,swj.lSh.y,swj.rSh.x,swj.rSh.y);
+      if(swj.hip&&swj.chest)tg.lineBetween(swj.hip.x,swj.hip.y,swj.chest.x,swj.chest.y);
+      if(swj.rHip&&swj.rKne)tg.lineBetween(swj.rHip.x,swj.rHip.y,swj.rKne.x,swj.rKne.y);
+      if(swj.rKne&&swj.rFt)tg.lineBetween(swj.rKne.x,swj.rKne.y,swj.rFt.x,swj.rFt.y);
+      tg.fillStyle(c,alpha*0.5);
+      if(swj.head)tg.fillCircle(swj.head.x,swj.head.y,14*S);
+    }
+
+    // ═══ SMEAR STREAK — stretch attacking arm between oldest and newest ghost ═══
+    if(count>=2){
+      const oldest=f.smearBuf[0];
+      const newest=f.smearBuf[count-1];
+      const ox=oldest.x+oldest.pose.rHnd.x*dir*S,oy=oldest.y+oldest.pose.rHnd.y*S;
+      const nx=newest.x+newest.pose.rHnd.x*dir*S,ny=newest.y+newest.pose.rHnd.y*S;
+      const dist=Math.hypot(nx-ox,ny-oy);
+      if(dist>8){
+        // Tapered smear stroke — thick at source, thin at tip
+        const steps=6;
+        for(let s=0;s<steps;s++){
+          const t1=s/steps,t2=(s+1)/steps;
+          const x1=ox+(nx-ox)*t1,y1=oy+(ny-oy)*t1;
+          const x2=ox+(nx-ox)*t2,y2=oy+(ny-oy)*t2;
+          const w=clamp((1-t1)*6,1,6);
+          const a=clamp((1-t1)*0.25,0.02,0.25);
+          tg.lineStyle(w,c,a);
+          tg.lineBetween(x1,y1,x2,y2);
+        }
+        // Oval smear blob at peak
+        tg.fillStyle(c,0.08);
+        tg.fillEllipse((ox+nx)/2,(oy+ny)/2,dist*0.35,dist*0.18);
+      }
+    }
+  }
+
   drawFighter(f,dt){
     const g=f.gfx,gg=f.glowGfx,tg=f.trailGfx,ag=f.armorGfx;
-    const dir=f.facingRight?1:-1,cx=f.x,cy=f.y,p=f.pose;
+    const dir=f.facingRight?1:-1;
+    const p=f.pose;
     const c=parseInt(f.colorHex.slice(1),16);
-    g.clear();gg.clear();tg.clear();if(ag)ag.clear();
+    g.clear();gg.clear();if(ag)ag.clear();
+
+    // ═══════ DYNAMIC FLOOR SHADOW ═══════
+    const _groundDist=FLOOR-f.y;
+    const _shadowScale=Math.max(0.2,1-_groundDist/240);
+    const _shadowAlpha=0.28*_shadowScale*(f.dodging?0.5:1);
+    const _shadowW=72*S*_shadowScale;
+    const _shadowH=10*S*_shadowScale;
+    // Soft outer shadow
+    g.fillStyle(0x0a0a18,_shadowAlpha*0.5);
+    g.fillEllipse(f.x,FLOOR+8,_shadowW*1.4,_shadowH*1.4);
+    // Sharp inner shadow
+    g.fillStyle(0x0a0a18,_shadowAlpha);
+    g.fillEllipse(f.x,FLOOR+5,_shadowW,_shadowH);
+
+    // ═══════ FLIPBOOK JITTER — hand-drawn wobble (amplified when parry-stunned) ═══════
+    const _stunMult=f.parryStunned?3.5:1;
+    const jx=(Math.random()-0.5)*2.2*_stunMult;
+    const jy=(Math.random()-0.5)*1.8*_stunMult;
+    const cx=f.x+jx;
+    const cy=f.y+jy;
+
+    // ═══════ TRAIL — ink smear ghost frames ═══════
+    if(tg){
+      tg.setAlpha(tg.alpha*0.35);// decay previous frame
+      if(f.attacking&&f.trails.length>0){
+        const tr=f.trails[f.trails.length-1];
+        const tp=tr.pose;const tx2=tr.x,ty2=tr.y;
+        const tdir=f.facingRight?1:-1;
+        tg.fillStyle(c,0.08);
+        const twj={};for(const k in tp)twj[k]={x:tx2+tp[k].x*tdir*S,y:ty2+tp[k].y*S};
+        tg.lineStyle(4,c,0.07);
+        if(twj.lSh&&twj.rSh)tg.lineBetween(twj.lSh.x,twj.lSh.y,twj.rSh.x,twj.rSh.y);
+        if(twj.rSh&&twj.rElb)tg.lineBetween(twj.rSh.x,twj.rSh.y,twj.rElb.x,twj.rElb.y);
+        if(twj.rElb&&twj.rHnd)tg.lineBetween(twj.rElb.x,twj.rElb.y,twj.rHnd.x,twj.rHnd.y);
+      }else{
+        tg.clear();
+      }
+    }
 
     // Compute world joint positions (needed for weapon position even with sprite)
     const wj={};for(const k in p)wj[k]={x:cx+p[k].x*dir*S,y:cy+p[k].y*S};wj.hip={x:cx,y:cy};
@@ -924,6 +1215,8 @@ export default class ArenaScene extends Phaser.Scene{
     if(f.useSprite&&f.spriteRenderer){
       // Update sprite animation & position
       f.spriteRenderer.update(f,dt);
+      // ═══ SMEAR ═══
+      if(tg){tg.clear();this.drawSmear(f,tg,wj,dir);}
 
       // ═══════ SHADOW CHARACTER GLOW — body-wrapping energy field ═══════
       const t=Date.now()*0.001;
@@ -1010,6 +1303,13 @@ export default class ArenaScene extends Phaser.Scene{
       // Bleed indicator
       if(f.bleedTimer>0){g.lineStyle(2,0xf87171,0.3+Math.sin(Date.now()*0.008)*0.2);g.strokeCircle(cx,cy-20*S,30*S)}
 
+      // ═══ PARRY PUNISH WINDOW — pulsing green ring signals free counter ═══
+      if(f.parryWindow>0){
+        const _pwPulse=0.5+Math.sin(Date.now()*0.022)*0.5;
+        g.lineStyle(4,0x00ff88,0.75*_pwPulse);g.strokeCircle(cx,cy-20*S,48*S);
+        g.lineStyle(2,0x00ff88,0.35*_pwPulse);g.strokeCircle(cx,cy-20*S,56*S);
+      }
+
       // ═══════ HOLOGRAPHIC ARMOR OVERLAY on sprite ═══════
       if(f.armor&&!f.armor.broken){
         // Update user-drawn armor sprite position + holographic FX
@@ -1068,11 +1368,15 @@ export default class ArenaScene extends Phaser.Scene{
         const hnd=f.spriteRenderer.getHandWorldPos(f);let angle;
         if(f.attacking){const pr=f.swingEasing(f.swingProgress);angle=dir>0?-0.9+pr*1.4:0.9-pr*1.4}else angle=dir>0?0.3:-0.3;
         const cos=Math.cos(angle),sin=Math.sin(angle);
+        // ═══ SPECIAL METER WEAPON GLOW ═══
+        const _spFill=clamp(1-(f.specialCd||0)/(f.specialMax||SPECIAL_CD),0,1);
+        if(_spFill>0.08){const _sgCol=_spFill>0.8?0xfbbf24:_spFill>0.5?0xa78bfa:0x88aaff;const _sgA=_spFill*0.38+Math.sin(Date.now()*0.008)*0.09;g.lineStyle(8+_spFill*9,_sgCol,_sgA);g.beginPath();const _sv0=f.weaponVerts[0];g.moveTo(hnd.x+(_sv0.x*cos-_sv0.y*sin)*dir,hnd.y+(_sv0.x*sin+_sv0.y*cos));for(let _si=1;_si<f.weaponVerts.length;_si++){const _sv=f.weaponVerts[_si];g.lineTo(hnd.x+(_sv.x*cos-_sv.y*sin)*dir,hnd.y+(_sv.x*sin+_sv.y*cos));}g.closePath();g.strokePath();}
         if(f.attacking){g.lineStyle(5,c,0.2*weaponAlpha);g.beginPath();const v0=f.weaponVerts[0];g.moveTo(hnd.x+(v0.x*cos-v0.y*sin)*dir,hnd.y+(v0.x*sin+v0.y*cos));for(let i=1;i<f.weaponVerts.length;i++){const v=f.weaponVerts[i];g.lineTo(hnd.x+(v.x*cos-v.y*sin)*dir,hnd.y+(v.x*sin+v.y*cos))}g.closePath();g.strokePath()}
         g.lineStyle(2.5,weaponTint,0.9*weaponAlpha);g.beginPath();const v02=f.weaponVerts[0];g.moveTo(hnd.x+(v02.x*cos-v02.y*sin)*dir,hnd.y+(v02.x*sin+v02.y*cos));for(let i=1;i<f.weaponVerts.length;i++){const v=f.weaponVerts[i];g.lineTo(hnd.x+(v.x*cos-v.y*sin)*dir,hnd.y+(v.x*sin+v.y*cos))}g.closePath();g.strokePath();
         if(durPct<0.3&&Math.random()<0.05){this.shatterFx.setPosition(hnd.x,hnd.y);this.shatterFx.emitParticle(2)}
       }
       if(f.nameGfx)f.nameGfx.setPosition(f.x,f.y+48*S);
+      this._drawCombatFx(f,g,tg,wj,cx,cy,dir);
       return; // Skip stick-figure drawing for sprite-based fighter
     }
 
@@ -1086,6 +1390,8 @@ export default class ArenaScene extends Phaser.Scene{
 
     // Trails
     for(const tr of f.trails){tg.fillStyle(c,tr.alpha*0.3);const tw={};for(const k in tr.pose)tw[k]={x:tr.x+tr.pose[k].x*dir*S,y:tr.y+tr.pose[k].y*S};tw.hip={x:tr.x,y:tr.y};taperedLimb(tg,tw.hip.x,tw.hip.y,tw.chest.x,tw.chest.y,22*S,26*S);taperedLimb(tg,tw.rSh.x,tw.rSh.y,tw.rElb.x,tw.rElb.y,11*S,9*S);taperedLimb(tg,tw.rElb.x,tw.rElb.y,tw.rHnd.x,tw.rHnd.y,9*S,7*S);tg.fillCircle(tw.head.x,tw.head.y,16*S)}
+    // ═══ SMEAR ═══
+    this.drawSmear(f,tg,wj,dir);
 
     // ═══════ SHADOW CHARACTER GLOW — body-wrapping energy for stick-figure ═══════
     const t2=Date.now()*0.001;
@@ -1228,6 +1534,13 @@ export default class ArenaScene extends Phaser.Scene{
 
     if(f.bleedTimer>0){g.lineStyle(2,0xf87171,0.3+Math.sin(Date.now()*0.008)*0.2);g.strokeCircle(cx,cy-20*S,30*S)}
 
+    // ═══ PARRY PUNISH WINDOW — pulsing green ring signals free counter ═══
+    if(f.parryWindow>0){
+      const _pwPulse2=0.5+Math.sin(Date.now()*0.022)*0.5;
+      g.lineStyle(4,0x00ff88,0.75*_pwPulse2);g.strokeCircle(cx,cy-20*S,48*S);
+      g.lineStyle(2,0x00ff88,0.35*_pwPulse2);g.strokeCircle(cx,cy-20*S,56*S);
+    }
+
     // WEAPON — with durability visual
     if(f.weaponVerts.length>=3&&!f.bareHanded){
       const durPct=clamp(f.weaponDur/f.maxDur,0,1);
@@ -1236,6 +1549,9 @@ export default class ArenaScene extends Phaser.Scene{
       const hnd=wj.rHnd;let angle;
       if(f.attacking){const pr=f.swingEasing(f.swingProgress);angle=dir>0?-0.9+pr*1.4:0.9-pr*1.4}else angle=dir>0?0.3:-0.3;
       const cos=Math.cos(angle),sin=Math.sin(angle);
+      // ═══ SPECIAL METER WEAPON GLOW ═══
+      const _spFill2=clamp(1-(f.specialCd||0)/(f.specialMax||SPECIAL_CD),0,1);
+      if(_spFill2>0.08){const _sgCol2=_spFill2>0.8?0xfbbf24:_spFill2>0.5?0xa78bfa:0x88aaff;const _sgA2=_spFill2*0.38+Math.sin(Date.now()*0.008)*0.09;g.lineStyle(8+_spFill2*9,_sgCol2,_sgA2);g.beginPath();const _sv02=f.weaponVerts[0];g.moveTo(hnd.x+(_sv02.x*cos-_sv02.y*sin)*dir,hnd.y+(_sv02.x*sin+_sv02.y*cos));for(let _si2=1;_si2<f.weaponVerts.length;_si2++){const _sv2=f.weaponVerts[_si2];g.lineTo(hnd.x+(_sv2.x*cos-_sv2.y*sin)*dir,hnd.y+(_sv2.x*sin+_sv2.y*cos));}g.closePath();g.strokePath();}
       if(f.attacking){g.lineStyle(5,c,0.2*weaponAlpha);g.beginPath();const v0=f.weaponVerts[0];g.moveTo(hnd.x+(v0.x*cos-v0.y*sin)*dir,hnd.y+(v0.x*sin+v0.y*cos));for(let i=1;i<f.weaponVerts.length;i++){const v=f.weaponVerts[i];g.lineTo(hnd.x+(v.x*cos-v.y*sin)*dir,hnd.y+(v.x*sin+v.y*cos))}g.closePath();g.strokePath()}
       g.lineStyle(2.5,weaponTint,0.9*weaponAlpha);g.beginPath();const v0=f.weaponVerts[0];g.moveTo(hnd.x+(v0.x*cos-v0.y*sin)*dir,hnd.y+(v0.x*sin+v0.y*cos));for(let i=1;i<f.weaponVerts.length;i++){const v=f.weaponVerts[i];g.lineTo(hnd.x+(v.x*cos-v.y*sin)*dir,hnd.y+(v.x*sin+v.y*cos))}g.closePath();g.strokePath();
 
@@ -1246,6 +1562,71 @@ export default class ArenaScene extends Phaser.Scene{
     }
     g.setAlpha(1); // reset alpha
     if(f.nameGfx)f.nameGfx.setPosition(f.x,f.y+48*S);
+    this._drawCombatFx(f,g,tg,wj,cx,cy,dir);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // SHARED COMBAT VISUAL FX — ink drops, stun stars, weapon trail,
+  //                           low health body glow
+  // ═══════════════════════════════════════════════════════════════
+  _drawCombatFx(f,g,tg,wj,cx,cy,dir){
+    const _t=Date.now()*0.001;
+
+    // ──── Red ink drops falling from fighter ────
+    if(f.inkDrops&&f.inkDrops.length>0){
+      for(const _d of f.inkDrops){
+        if(_d.alpha<0.03)continue;
+        g.fillStyle(0xcc0011,_d.alpha*0.88);
+        g.fillCircle(_d.x,_d.y,_d.size);
+        if(_d.vy>0.6){g.fillStyle(0xcc0011,_d.alpha*0.42);g.fillRect(_d.x-1,_d.y-_d.size*0.9,2,_d.size*0.9);}
+        if(_d.y>FLOOR-6&&_d.y<FLOOR+8){g.lineStyle(1,0xcc0011,_d.alpha*0.4);g.strokeCircle(_d.x,FLOOR,_d.size*1.6);}
+      }
+    }
+
+    // ──── Stun stars orbiting the head ────
+    if(f.stunTimer>0&&wj.head){
+      const _hx2=wj.head.x,_hy2=wj.head.y;
+      const _orb=24*S;
+      for(let _si=0;_si<3;_si++){
+        const _ang=_t*4+_si*(Math.PI*2/3);
+        const _sx=_hx2+Math.cos(_ang)*_orb;
+        const _sy=_hy2-16*S+Math.sin(_ang)*_orb*0.38;
+        const _outer=5*S,_inner=2.2*S;
+        g.fillStyle(0xFFE66D,0.88+Math.sin(_t*7+_si)*0.12);
+        g.beginPath();
+        for(let _pi=0;_pi<10;_pi++){const _r=_pi%2===0?_outer:_inner;const _a=-Math.PI/2+_pi*(Math.PI/5);const _px=_sx+Math.cos(_a)*_r,_py=_sy+Math.sin(_a)*_r;if(_pi===0)g.moveTo(_px,_py);else g.lineTo(_px,_py);}
+        g.closePath();g.fillPath();
+        g.lineStyle(1.2,0x1a1a1a,0.65);g.strokePath();
+        g.fillStyle(0xffffff,0.5);g.fillCircle(_sx-_outer*0.2,_sy-_outer*0.2,1.2);
+      }
+    }
+
+    // ──── Weapon trail arc (colored streak, fades over ~8 frames) ────
+    if(f.weaponTrailPts&&f.weaponTrailPts.length>=2){
+      const _maxAge=125;
+      const _tc=parseInt(f.colorHex.slice(1),16);
+      for(let _ti=1;_ti<f.weaponTrailPts.length;_ti++){
+        const _pt1=f.weaponTrailPts[_ti-1],_pt2=f.weaponTrailPts[_ti];
+        const _frac=_ti/f.weaponTrailPts.length;
+        const _a=clamp((1-_pt1.age/_maxAge)*0.7*_frac,0,0.7);
+        const _w=clamp((1-_pt1.age/_maxAge)*5*_frac,0.5,5);
+        if(_a<0.025)continue;
+        tg.lineStyle(_w,_tc,_a);tg.lineBetween(_pt1.x,_pt1.y,_pt2.x,_pt2.y);
+      }
+      const _newest=f.weaponTrailPts[f.weaponTrailPts.length-1];
+      if(_newest&&_newest.age<40){tg.fillStyle(parseInt(f.colorHex.slice(1),16),clamp(1-_newest.age/40,0,1)*0.55);tg.fillCircle(_newest.x,_newest.y,3.5);}
+    }
+
+    // ──── Low health — body glow shifts to red ────
+    const _hpPct=f.hp/f.maxHp;
+    if(_hpPct<0.35&&f.hp>0){
+      const _rm=clamp(1-_hpPct/0.35,0,1);
+      const _flicker=Math.sin(_t*8+f.x*0.01);
+      const _rA=Math.max(0,(0.10+_flicker*0.07)*_rm);
+      f.glowGfx.fillStyle(0xdd1133,_rA);f.glowGfx.fillEllipse(cx,cy-18*S,46*S,68*S);
+      f.glowGfx.fillStyle(0xdd1133,_rA*0.45);f.glowGfx.fillCircle(cx,cy-22*S,96*S);
+      if(_hpPct<0.15){const _rR=32*S+Math.sin(_t*9)*6*S;f.glowGfx.lineStyle(2,0xdd1133,Math.max(0,0.55*_rm+_flicker*0.2));f.glowGfx.strokeCircle(cx,cy-22*S,_rR);}
+    }
   }
 
   drawHUD(){
@@ -1327,7 +1708,25 @@ export default class ArenaScene extends Phaser.Scene{
       vg.fillStyle(0x000000,0.6);
       vg.fillRect(0,0,W,70);vg.fillRect(0,H-70,W,70);
       vg.lineStyle(3,0xFF8A76,0.4);vg.lineBetween(0,70,W,70);vg.lineBetween(0,H-70,W,H-70);
-    }else{this.vignetteGfx.clear()}
+    }else{
+      this.vignetteGfx.clear();
+      // ═══════ LOW HEALTH VIGNETTE — red flickering border ═══════
+      const _tv=Date.now()*0.006;
+      for(const _fv of this.f){
+        if(_fv.hp<=0)continue;
+        const _hpV=_fv.hp/_fv.maxHp;
+        if(_hpV<0.3){
+          const _rm=clamp(1-_hpV/0.3,0,1);
+          const _va=Math.max(0,(0.20+Math.sin(_tv)*0.13)*_rm);
+          const _bw=Math.floor(28+_rm*42);
+          this.vignetteGfx.fillStyle(0xDD1133,_va);
+          this.vignetteGfx.fillRect(0,0,W,_bw);
+          this.vignetteGfx.fillRect(0,H-_bw,W,_bw);
+          this.vignetteGfx.fillRect(0,0,_bw,H);
+          this.vignetteGfx.fillRect(W-_bw,0,_bw,H);
+        }
+      }
+    }
   }
 
   showTaunt(pool,delay=0,fighter=null){
@@ -1406,8 +1805,174 @@ export default class ArenaScene extends Phaser.Scene{
     }
   }
 
+  togglePause(){
+    this.paused=!this.paused;
+    if(this.paused){this._prePauseSpeed=this.gameSpeed;this.gameSpeed=0;}
+    else{this.gameSpeed=this._prePauseSpeed||1;}
+    this.onEvent('pause',{paused:this.paused});
+  }
+
+  resumeGame(){
+    if(!this.paused)return;
+    this.paused=false;
+    this.gameSpeed=this._prePauseSpeed||1;
+    this.onEvent('pause',{paused:false});
+  }
+
+  // ══════════════════════════════════════════════════════
+  // EFFECT 1 — Slash Arc Decals (burned-in floor scuffs)
+  // ══════════════════════════════════════════════════════
+  spawnSlashDecal(x,dir){
+    if(!this.floorDecals)this.floorDecals=[];
+    this.floorDecals.push({
+      x:clamp(x,80,W-80),
+      dir,
+      alpha:0.52,
+      life:4000,
+      maxLife:4000,
+      spread:20+Math.random()*18,   // half-width of the arc
+      rot:(Math.random()-0.5)*0.35, // slight random tilt
+    });
+    if(this.floorDecals.length>14)this.floorDecals.shift();
+  }
+
+  // ══════════════════════════════════════════════════════
+  // EFFECT 2 — Damage Number Pop-ups
+  // ══════════════════════════════════════════════════════
+  spawnDmgNumber(x,y,dmg,blocked){
+    const rounded=Math.round(dmg);
+    const big=rounded>=20,mid=rounded>=10;
+    const col=blocked?'#88C8E8':big?'#E63946':mid?'#FFE66D':'#ffffff';
+    const size=blocked?'17px':big?'30px':mid?'24px':'19px';
+    const label=blocked?`${rounded} CHIP`:String(rounded);
+    const ox=(Math.random()-0.5)*24;
+    const txt=this.add.text(x+ox,y,label,{
+      fontFamily:'Permanent Marker',fontSize:size,
+      color:col,stroke:'#1a1a1a',strokeThickness:4,
+    }).setOrigin(0.5).setDepth(30);
+    this.tweens.add({
+      targets:txt,y:y-58,alpha:{from:1,to:0},
+      duration:blocked?700:950,
+      ease:'Power2',
+      onComplete:()=>txt.destroy(),
+    });
+  }
+
+  // ══════════════════════════════════════════════════════
+  // EFFECT 3 — Speed Lines on Dodge
+  // ══════════════════════════════════════════════════════
+  spawnSpeedLines(f){
+    const g=this.add.graphics().setDepth(28);
+    const dir=f.dodgeDir||1;
+    const cx=f.x, cy=f.y-22*S;
+    const col=parseInt(f.colorHex.slice(1),16);
+    // Dark body-color streaks (main lines)
+    g.lineStyle(2,col,0.75);
+    for(let i=0;i<9;i++){
+      const oy=(Math.random()-0.5)*52*S;
+      const len=28+Math.random()*64;
+      const x0=cx-dir*len*0.25, x1=cx+dir*len;
+      g.lineBetween(x0,cy+oy,x1,cy+oy+(Math.random()-0.5)*3);
+    }
+    // Bright white highlight streaks (fewer, shorter)
+    g.lineStyle(2.5,0xffffff,0.45);
+    for(let i=0;i<4;i++){
+      const oy=(Math.random()-0.5)*30*S;
+      const len=40+Math.random()*38;
+      g.lineBetween(cx-dir*len*0.15,cy+oy,cx+dir*len*0.75,cy+oy);
+    }
+    this.tweens.add({targets:g,alpha:{from:1,to:0},duration:260,ease:'Power2',
+      onComplete:()=>g.destroy()});
+  }
+
+  // ══════════════════════════════════════════════════════
+  // EFFECT 4 — Block Shockwave Ring
+  // ══════════════════════════════════════════════════════
+  spawnBlockRing(x,y){
+    if(!this.shockRings)this.shockRings=[];
+    this.shockRings.push({x,y,r:6,life:420,maxLife:420});
+  }
+
+  // ══════════════════════════════════════════════════════
+  // MASTER DRAW — called every update tick
+  // ══════════════════════════════════════════════════════
+  drawFxEffects(dt){
+    const safeDt=dt||16;
+
+    // ── Floor decals ──────────────────────────────────
+    this.decalGfx.clear();
+    if(this.floorDecals&&this.floorDecals.length>0){
+      this.floorDecals=this.floorDecals.filter(d=>d.life>0);
+      for(const d of this.floorDecals){
+        d.life-=safeDt;
+        d.alpha=clamp((d.life/d.maxLife)*0.52,0,0.52);
+        const a=d.alpha;
+        const sp=d.spread;
+        const fx=d.x;
+        const fy=FLOOR+2;
+        // Two curved strokes — a wide shallow arc mimicking a sword swipe on the floor
+        this.decalGfx.lineStyle(3,0x1a1a1a,a);
+        this.decalGfx.beginPath();
+        // Arc sweeping in attack direction: 3 bezier-style line segments
+        const segs=6;
+        for(let i=0;i<=segs;i++){
+          const t=i/segs;
+          const px=fx-sp+t*sp*2*d.dir;
+          const py=fy-Math.sin(t*Math.PI)*7+d.rot*sp*(t-0.5);
+          if(i===0)this.decalGfx.moveTo(px,py);else this.decalGfx.lineTo(px,py);
+        }
+        this.decalGfx.strokePath();
+        // Thinner inner echo
+        this.decalGfx.lineStyle(1.5,0x1a1a1a,a*0.55);
+        this.decalGfx.beginPath();
+        for(let i=0;i<=segs;i++){
+          const t=i/segs;
+          const px=fx-sp*0.7+t*sp*1.4*d.dir;
+          const py=fy-Math.sin(t*Math.PI)*4+(d.rot+0.1)*sp*(t-0.5);
+          if(i===0)this.decalGfx.moveTo(px,py);else this.decalGfx.lineTo(px,py);
+        }
+        this.decalGfx.strokePath();
+      }
+    }
+
+    // ── Block shockwave rings ─────────────────────────
+    this.fxGfx.clear();
+    if(this.shockRings&&this.shockRings.length>0){
+      this.shockRings=this.shockRings.filter(r=>r.life>0);
+      for(const r of this.shockRings){
+        r.r+=safeDt*0.20;
+        r.life-=safeDt;
+        const t=1-r.life/r.maxLife;       // 0→1 as ring expands
+        const alpha=clamp((1-t)*0.95,0,0.95);
+        const lw=clamp(3.5*(1-t*0.75),0.5,3.5);
+        // Outer ring — blue-white
+        this.fxGfx.lineStyle(lw,0xaaddff,alpha);
+        this.fxGfx.strokeCircle(r.x,r.y,r.r);
+        // Inner echo ring — pure white, smaller
+        this.fxGfx.lineStyle(lw*0.6,0xffffff,alpha*0.6);
+        this.fxGfx.strokeCircle(r.x,r.y,r.r*0.58);
+        // Tiny cross sparks at 45° offsets
+        if(t<0.4){
+          this.fxGfx.lineStyle(1.5,0xffffff,alpha*0.8);
+          const spark=r.r*0.55;
+          for(let a45=0;a45<Math.PI*2;a45+=Math.PI/2){
+            const sx=r.x+Math.cos(a45+Math.PI/4)*spark;
+            const sy=r.y+Math.sin(a45+Math.PI/4)*spark;
+            this.fxGfx.lineBetween(sx-4,sy,sx+4,sy);
+            this.fxGfx.lineBetween(sx,sy-4,sx,sy+4);
+          }
+        }
+      }
+    }
+  }
+
   update(time,rawDt){
     const dt=rawDt*this.gameSpeed;
+    if(this.paused){
+      for(const f of this.f){this.drawFighter(f,0)}
+      this.drawHUD();
+      return;
+    }
     if(this.transitioning){
       for(const f of this.f){this.drawFighter(f,0)}
       this.drawHUD();
@@ -1429,12 +1994,13 @@ export default class ArenaScene extends Phaser.Scene{
     this.timerText.setText(String(Math.max(0,Math.ceil(this.timer))));
     const local=this.f[0];if(local?.hp>0&&!local.knockedDown)this.handleInput(local);
     for(const f of this.f){
-      if(f.isDummy)this.dummyLogic(f);
+      if(f.isDummy)this.dummyLogic(f,dt);
       this.updateFighter(f,dt);
       if(f.attacking)for(const t of this.f)if(t.id!==f.id&&t.hp>0)this.checkHit(f,t);
       this.drawFighter(f,dt);
     }
     this.drawHUD();
+    this.drawFxEffects(dt);
 
     // Check round end
     if(!this.roundOver){

@@ -14,6 +14,7 @@ export default function TheArena({ gameData, onExit }) {
   const reforgeCanvasRef = useRef(null);
   const reforgeTimerRef = useRef(null);
   const [matchResult, setMatchResult] = useState(null);
+  const [paused, setPaused] = useState(false);
   const [reforging, setReforging] = useState(false);
   const [reforgeTime, setReforgeTime] = useState(REFORGE_SECONDS);
   const [reforgeAnalysis, setReforgeAnalysis] = useState(null);
@@ -35,6 +36,9 @@ export default function TheArena({ gameData, onExit }) {
   }, [getScene]);
 
   const handleGameEvent = useCallback((type, data) => {
+    if (type === 'pause') {
+      setPaused(data.paused);
+    }
     if (type === 'matchEnd') {
       setMatchResult(data);
       setReforging(false);
@@ -103,6 +107,12 @@ export default function TheArena({ gameData, onExit }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleResume = useCallback(() => {
+    const scene = getScene();
+    if (scene) scene.resumeGame();
+    else setPaused(false);
+  }, [getScene]);
+
   const handleRestart = useCallback(() => {
     setMatchResult(null);
     setReforging(false);
@@ -150,6 +160,27 @@ export default function TheArena({ gameData, onExit }) {
       </div>
 
       <div ref={containerRef} className="arena-canvas" data-testid="arena-game-canvas" />
+
+      {/* ═══════ PAUSE OVERLAY ═══════ */}
+      {paused && (
+        <div className="match-result-overlay" data-testid="pause-overlay" style={{backdropFilter:'blur(6px)'}}>
+          <div className="result-card" style={{minWidth:320,gap:20}}>
+            <h2 className="result-title" style={{fontSize:48,letterSpacing:4}}>PAUSED</h2>
+            <p style={{color:'#94a3b8',fontFamily:'Caveat',fontSize:18,margin:0}}>TRAINING MODE — ESC to resume</p>
+            <div className="result-actions" style={{flexDirection:'column',gap:10}}>
+              <button className="primary-btn" onClick={handleResume} data-testid="resume-btn">
+                ▶ RESUME
+              </button>
+              <button className="secondary-btn" onClick={handleRestart} data-testid="restart-from-pause-btn">
+                <RotateCcw size={16} /> RESTART
+              </button>
+              <button className="secondary-btn" onClick={onExit} data-testid="exit-from-pause-btn">
+                <ArrowLeft size={16} /> EXIT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══════ MID-FIGHT REFORGE OVERLAY ═══════ */}
       {reforging && (
